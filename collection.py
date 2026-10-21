@@ -868,6 +868,11 @@ def install(cafe):
 
     def mate_image(key, frame, facing):
         """Walking sprite of a companion, as (surface, feet offset y) -- same art the guest has in the cafe."""
+        if key.startswith('staff:'):         # hire rows preview as the staff's own animal, standing on the floor
+            look = next(sd['look'] for sd in cafe.STAFF if sd['id'] == key[6:])
+            surf = pygame.Surface((40, 44), pygame.SRCALPHA)
+            cafe.draw_animal(surf, 20, 36, look['species'], look['v'], look['outfit'][1], None, frame, facing)
+            return surf, 20, 36
         tier = mate_tier(key)
         if key.startswith(('fam_', 'famn_')):
             return fam_image(key, frame, facing), 12, 32

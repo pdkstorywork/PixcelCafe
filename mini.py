@@ -278,6 +278,22 @@ def install_mini_bar(cafe):
         small = pg.transform.smoothscale(big, (r_out * 2 + 2, r_out * 2 + 2))
         surface.blit(small, small.get_rect(center=center))
 
+    def draw_skin_bar(surface, box, skin):
+        """Mini window's bottom bar in the toolbar-mode look: gradient, edge, flat top, rounded bottom."""
+        corners = dict(border_top_left_radius=0, border_top_right_radius=0, border_bottom_left_radius=8,
+                       border_bottom_right_radius=8)
+        bar = pg.Surface(box.size, pg.SRCALPHA)
+        for y in range(box.h):
+            t = min(1.0, y / (box.h * 0.6))
+            bar.fill(tuple(int(skin['light'][k] + (skin['fill'][k] - skin['light'][k]) * t) for k in range(3)) + (255,),
+                     (0, y, box.w, 1))
+        mask = pg.Surface(box.size, pg.SRCALPHA)
+        pg.draw.rect(mask, (255, 255, 255, 255), (0, 0, *box.size), **corners)
+        bar.blit(mask, (0, 0), special_flags=pg.BLEND_RGBA_MULT)
+        pg.draw.rect(bar, skin['edge'], (0, 0, *box.size), 2, **corners)
+        surface.blit(bar, box)
+        return box
+
     def draw_mini(screen, game, scene, mouse):
         ref['game'] = game
         skin = palette(game)
@@ -320,6 +336,7 @@ def install_mini_bar(cafe):
                 box.y -= 1
                 box.h += 1
                 kwargs = dict(kwargs, border_top_left_radius=0, border_top_right_radius=0)
+                return plain_rect(surface, color, box, *args, **kwargs) if args else draw_skin_bar(surface, box, skin)
             return plain_rect(surface, color, box, *args, **kwargs)
 
         def circle_hook(surface, color, center, *args, **kwargs):
@@ -342,7 +359,9 @@ def install_mini_bar(cafe):
         # repaint the right-hand buttons so all of them share one size and gap
         modes, _old_x, speeds, _old_settings = result
         # Use the palette directly: sampling can pick up overflowing income text.
-        pg.draw.rect(screen, skin['fill'], (MIN_RECT[0] - 1, ROW_Y, screen.get_width() - MIN_RECT[0] - 3, 16))
+        screen.set_clip(pg.Rect(MIN_RECT[0] - 1, ROW_Y, screen.get_width() - MIN_RECT[0] - 3, 16))
+        draw_skin_bar(screen, pg.Rect(0, cafe.SH, cafe.MW, 20), skin)
+        screen.set_clip(None)
         step = BTN_W + BTN_GAP
         mode_rects = [pg.Rect(MIN_RECT[0] + step * (i + 1), ROW_Y, BTN_W, 16) for i in range(len(modes))]
         xbtn = pg.Rect(MIN_RECT[0] + step * (len(modes) + 1), ROW_Y, BTN_W, 16)
@@ -739,17 +758,21 @@ def install_mini_bar(cafe):
                         game.toggle_guest_speed(key[1])
                     return
             pos = cafe.win_pos()      # None when the window handle is unavailable
-            # Anchor to the original click, even when several events arrive in one batch.
-            ref['drag'] = event.pos if pos is not None else None
+            # Anchor to the real cursor and window origin at press time, in screen pixels.
+            ref['drag'] = (cursor(), pos) if pos is not None else None
             if ref['drag'] is not None:
                 hwnd = pg.display.get_wm_info().get('window')
                 if hwnd:
                     ctypes.windll.user32.SetCapture(ctypes.c_void_p(hwnd))
         elif event.type == pg.MOUSEMOTION and ref['drag']:
-            point = _Point()
-            ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
-            dx, dy = ref['drag']
-            game.mini_pos = (point.x - dx, point.y - dy)
+            if not ctypes.windll.user32.GetAsyncKeyState(0x01) & 0x8000:
+                # the release was missed: drop the drag instead of leaving the bar stuck to the cursor
+                ref['drag'] = None
+                ctypes.windll.user32.ReleaseCapture()
+                return
+            (sx, sy), (ox, oy) = ref['drag']
+            x, y = cursor()
+            game.mini_pos = (ox + x - sx, oy + y - sy)
             cafe.win_move(*game.mini_pos)
         elif event.type == pg.MOUSEBUTTONUP and event.button == 1 and ref['drag']:
             ref['drag'] = None
@@ -1114,7 +1137,10 @@ def install_merged_tabs(cafe):
             cafe.text(surface, f"판매대·가구 +{round((g.b_stand + g.b_furn) * 100)}%  ·  "
                       f"꾸미기 +{round(g.b_int * 100)}%", 12, (110, 76, 52), px + 12, py + 62, True)
         shown = [i for i in range(len(cafe.TABS)) if i != DECOR_TAB]
-        bg = surface.get_at((px + 5, py + 28))
+        # display order: 의상 before 동료 (tab indices stay as-is; compiled code depends on them)
+        if cafe.TABS[4:6] == ['동료', '의상']:
+            shown[shown.index(4)], shown[shown.index(5)] = 5, 4
+        bg =surface.get_at((px + 5, py + 28))
         surface.fill(bg, (px + 6, py + 8, pw - 12, 40))
         self.hit[:] = [h for h in self.hit if h[1] != 'tab']
         tw = (pw - 16) // len(shown)
@@ -1194,6 +1220,13 @@ def install_smooth_scroll(cafe):
         st = self.__dict__.setdefault('_smooth', {})
         ends = self.__dict__.setdefault('_smooth_ends', {})
         tab = self.tab
+        # sub-tabs swap the list under one tab id: keep each list's learned end (and glide state) apart
+        subs = (tuple(sorted(getattr(self, 'dex_subs', {}).items())), getattr(self, 'dex_cat', None),
+                getattr(self, 'recipe_sub_id', None), getattr(self, 'furn_sub', None))
+        if self.__dict__.get('_smooth_subs', {}).get(tab) != subs:
+            self.__dict__.setdefault('_smooth_subs', {})[tab] = subs
+            st.pop(tab, None)
+            ends.pop(tab, None)
         cur, target, last, stamp = st.get(tab, (0.0, 0.0, 0, now))
         pos = self.scroll[tab]
         notch, wheel['y'] = wheel['y'], 0

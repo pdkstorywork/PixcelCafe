@@ -88,13 +88,15 @@ class BalanceTests(unittest.TestCase):
                     patch.object(cafe.pygame.display, 'get_wm_info', return_value={'window': 123}), \
                     patch.object(ctypes.windll.user32, 'SetCapture') as capture, \
                     patch.object(ctypes.windll.user32, 'ReleaseCapture') as release, \
+                    patch.object(ctypes.windll.user32, 'GetAsyncKeyState', return_value=0x8000), \
                     patch.object(ctypes.windll.user32, 'GetCursorPos', side_effect=cursor_position):
                 api.handle(cafe.pygame.event.Event(cafe.pygame.MOUSEBUTTONDOWN,
                                                  button=1, pos=(15, 52)))
                 capture.assert_called_once()
+                cursor = (1000, 720)
                 api.handle(cafe.pygame.event.Event(cafe.pygame.MOUSEMOTION, pos=(550, 400)))
-                move.assert_called_once_with(935, 648)
-                self.assertEqual(game.mini_pos, (935, 648))
+                move.assert_called_once_with(450, 320)
+                self.assertEqual(game.mini_pos, (450, 320))
                 api.handle(cafe.pygame.event.Event(cafe.pygame.MOUSEBUTTONUP,
                                                  button=1, pos=(15, 52)))
                 release.assert_called_once()
@@ -127,6 +129,18 @@ class BalanceTests(unittest.TestCase):
         ui.tab = 0
         self.assertIs(ui.preview_game(), game)
         self.assertIsNone(ui._mate_preview)
+
+    def test_staff_row_preview_draws_standing_character(self):
+        game = fresh_game()
+        ui = cafe.UI(game)
+        ui.tab = 4
+        cafe.pygame.display.set_mode((cafe.SW, cafe.SH))
+        for sd in cafe.STAFF:
+            ui.preview = ('mate', 'staff:' + sd['id'])
+            view = ui.preview_game()
+            sprite = cafe.pygame.Surface((cafe.SW, cafe.SH), cafe.pygame.SRCALPHA)
+            view.staff[0].draw(sprite)
+            self.assertGreater(sprite.get_bounding_rect().width, 0)
 
     def test_companion_preview_leaves_empty_cafe_unchanged(self):
         game = fresh_game()
