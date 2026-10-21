@@ -1156,8 +1156,8 @@ def install(cafe):
                                  sub=f'{n}회 발견 · 판매가 {v[3]:g}배',
                                  price='발견 완료', ok=False, state='owned', icon=icon))
             else:
-                rows.append(dict(kind='none', id=rid, name='???',
-                                 sub=f'{v[1]} {recipe["name"]} · 판매 시 {v[2] * 100:g}% 확률로 등장',
+                rows.append(dict(kind='none', id=rid, name=f'{v[1]} {recipe["name"]}',
+                                 sub=f'판매 시 {v[2] * 100:g}% 확률로 등장',
                                  price='미발견', ok=False, state='locked',
                                  icon=cafe.icon_for('recipe', rid, 'hidden')))
         return rows

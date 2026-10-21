@@ -975,9 +975,6 @@ def install_merged_tabs(cafe):
             cafe.text(surface, f"판매대·가구 +{round((g.b_stand + g.b_furn) * 100)}%  ·  "
                       f"꾸미기 +{round(g.b_int * 100)}%", 12, (110, 76, 52), px + 12, py + 62, True)
         shown = [i for i in range(len(cafe.TABS)) if i != DECOR_TAB]
-        # display order: 의상 before 동료 (tab indices stay as-is; compiled code depends on them)
-        if cafe.TABS[4:6] == ['동료', '의상']:
-            shown[shown.index(4)], shown[shown.index(5)] = 5, 4
         bg = surface.get_at((px + 5, py + 28))
         surface.fill(bg, (px + 6, py + 8, pw - 12, 40))
         self.hit[:] = [h for h in self.hit if h[1] != 'tab']
