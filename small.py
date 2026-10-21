@@ -1,4 +1,4 @@
-"""Small game patches: window art, recipe book, UI performance, staff art, rare guest dialog."""
+"""Small game patches: window art, recipe book, UI performance, staff art, guest behavior."""
 # ======================================================================
 # window_art
 # ======================================================================
@@ -11,6 +11,24 @@ import detail_render as dr
 
 ROOT = Path(__file__).resolve().parent
 SEASONS = ('season_spring', 'season_summer', 'season_autumn', 'season_winter')
+
+
+def install_customer_facing(cafe):
+    if getattr(cafe, '_customer_facing_installed', False):
+        return
+    cafe._customer_facing_installed = True
+    original_draw = cafe.Customer.draw
+
+    def draw(self, surface, t):
+        # Movement uses +1 for right; guest artwork faces left before mirroring.
+        facing = self.facing
+        self.facing = -facing
+        try:
+            return original_draw(self, surface, t)
+        finally:
+            self.facing = facing
+
+    cafe.Customer.draw = draw
 
 
 @lru_cache(maxsize=1)
@@ -207,7 +225,10 @@ def install_recipe_book(cafe):
                 (rect.x + 64, rect.y + 3, rect.w - 68, rect.h - 6))
             cafe.text(surface, row['name'], 14, (84, 52, 34), rect.x + 66, rect.y + 7, True)
             cafe.text(surface, row['sub'], font_size, (110, 76, 52), rect.x + 66, rect.y + 28)
-            cafe.text(surface, row['price'], 12,
+            price_size = 12
+            while price_size > 1 and cafe.font(price_size, True).size(row['price'])[0] > rect.w - 76:
+                price_size -= 1
+            cafe.text(surface, row['price'], price_size,
                       (91, 125, 76) if row['state'] == 'owned' else (130, 100, 76),
                       rect.x + 66, rect.y + 49, True)
 

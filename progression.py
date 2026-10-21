@@ -11,33 +11,28 @@ import time
 SALES_PER_LEVEL = 12         # Lv1->2 needs this much sales credit
 LEVEL_EXP = 3.0              # target = SALES_PER_LEVEL * level ** LEVEL_EXP
 SHARE_CREDIT = 0.12          # every other unlocked bread learns a bit from each sale
-LEVEL_PRICE = 0.2            # first level-up adds this share of the base price
-LEVEL_CURVE = 0.7            # <1: each further level adds less than the one before (diminishing returns)
+LEVEL_PRICE = 0.12           # collection stays valuable without compounding sale prices
+LEVEL_CURVE = 0.5            # square-root growth keeps long-running cafes on a small gold scale
 # ---- Sale time: now and then a crowd (3~5 guests) rushes in together ----
 SALE_CHECK_SEC = 60          # every minute the cafe rolls for a sale time
 SALE_CHANCE = 0.15           # 15% per roll -> about once every 6~7 minutes
 SALE_GUESTS = (3, 5)         # guests that rush in, inclusive range
 SALE_GUEST_GAP = 1.0         # seconds between the rushing guests
 
-STAFF_WORK_STEP = 30 * 60    # seconds of work per staff level, times current level
+STAFF_WORK_STEP = 8 * 3600   # Lv.10 takes 360 active hours (36~45 days at 8~10h/day)
 
-# ---- Recipes unlock automatically by cafe day (calendar days since first run) ----
-FIRST_UNLOCK_DAY = 2         # 2nd recipe
-LAST_UNLOCK_DAY = 330        # final recipe; the rest of the year is for leveling / collection
-UNLOCK_CURVE = 1.1
+# ---- Spread collection over 200~250 days at 8~10 active hours per day. ----
+LAST_UNLOCK_HOURS = 2000
+UNLOCK_CURVE = 1.6           # faster early discoveries, then regular long-term goals
 UNLOCK_KINDS = ('furn', 'sold', 'earn', 'guest')   # rotation by recipe index; index 1 (first bread) asks for 8 sales
-DAY_UNLOCK_INDEXES = (24, 34, 44)                  # "N일차 해금" is rare and only mid/late game
 
 
 def _span(minutes):
     return f"{minutes}분" if minutes < 120 else f"{minutes / 60:.0f}시간"
 
 
-def unlock_condition(index):
+def _unlock_task(index):
     """One unlock condition per recipe (RECIPES[index]); the kind rotates so each bread asks for something different."""
-    if index in DAY_UNLOCK_INDEXES:
-        day = unlock_day(index)
-        return dict(kind='day', need=day, text=f"{day}일차 해금")
     kind = UNLOCK_KINDS[index % len(UNLOCK_KINDS)]
     if kind == 'earn':
         need = int(nice_number(200 * index ** 2))
@@ -52,27 +47,33 @@ def unlock_condition(index):
     return dict(kind='sold', need=need, text=f"빵 {need}개 판매")
 
 
-def unlock_day(index, last_index=49):
-    """Cafe day on which RECIPES[index] unlocks (index 0 is the free starter)."""
-    if index <= 0:
-        return 1
+def unlock_hours(index, last_index=49):
+    """Active hours required; the first discovery still needs only eight sales."""
+    if index <= 1:
+        return 0
     frac = ((index - 1) / max(1, last_index - 1)) ** UNLOCK_CURVE
-    return int(round(FIRST_UNLOCK_DAY + (LAST_UNLOCK_DAY - FIRST_UNLOCK_DAY) * frac))
+    return int(round(LAST_UNLOCK_HOURS * frac))
 
 
-# ---- Economy: early purchases within an hour; larger upgrades take longer ----
+def unlock_condition(index, last_index=49):
+    cond = _unlock_task(index)
+    cond['hours'] = unlock_hours(index, last_index)
+    if cond['hours']:
+        cond['text'] += f" · 영업 {cond['hours']:,}시간"
+    return cond
+
+
+# ---- Economy: first decorations within an hour; full shop is a long-term goal ----
 MAX_GOLD = 10000      # top of the old recipe-price curve (used only as a position scale)
 COST_SCALE = 10.0       # first employee 500G; final employee 9,500G
 COST_CAP = 3000000
-# Guests arrive 5x as often (SPAWN_GAP 120s -> 24s), so purchases are repriced:
-# furniture most of all (the cheapest way to buy bonus), the rest a bit less.
 COST_UNIT = 0.1        # whole shop is priced at 1/10 of the old gold scale
-FURN_COST_MULT = 330.0
-SHOP_COST_MULT = 165.0  # staff, stands, interior, hero outfits
+FURN_COST_MULT = 990.0
+SHOP_COST_MULT = 495.0  # staff, stands, interior, hero outfits
 BUY_FIRST = 30        # position scale start
-SELL_FIRST = 5        # starter bread price at Lv.1; 5G x 20% = +1G per early level, so every level-up shows
+SELL_FIRST = 5        # starter bread price at Lv.1
 SELL_GROWTH = 1.01      # later recipes remain worthwhile beside leveled starter breads
-BONUS_SCALE = 0.08    # shop/staff income bonuses; stacked at full they gave x11.7 and flooded the late game
+BONUS_SCALE = 0.04    # owned pieces stack; keep their income secondary to collecting them
 
 
 EARLY_FURN_COST = (250.0, 500.0)   # the two cheapest base furniture pieces stay quick to buy
@@ -138,8 +139,7 @@ def rebalance(cafe):
         return _nice(curve(pos) * COST_SCALE * mult * COST_UNIT)
 
     for i, recipe in enumerate(recipes):
-        recipe['unlock_day'] = unlock_day(i, last)
-        recipe['cond'] = unlock_condition(i) if i else None
+        recipe['cond'] = unlock_condition(i, last) if i else None
         recipe['buy'] = 0
         sell = SELL_FIRST * SELL_GROWTH ** i
         recipe['sell'] = max(1, round(sell))    # whole gold only
@@ -259,12 +259,16 @@ def install(cafe):
         if index > 0 and self.rlv[cafe.RECIPES[index - 1]['id']] <= 0:
             return False         # unlock in order
         cond = cafe.RECIPES[index]['cond']
-        return self.cond_value(cond['kind']) >= cond['need']
+        return (self.cond_value(cond['kind']) >= cond['need']
+                and self.play_time >= cond['hours'] * 3600)
 
     def cond_now(self, index):
         kind = cafe.RECIPES[index]['cond']['kind']
         unit = dict(day='일차', earn='G', furn='개', guest='종', sold='개')[kind]
-        return f"현재 {self.cond_value(kind):,}{unit}"
+        text = f"현재 {self.cond_value(kind):,}{unit}"
+        if cafe.RECIPES[index]['cond']['hours']:
+            text += f" · 영업 {self.play_time / 3600:,.1f}시간"
+        return text
 
     def cond_progress(self, index):
         """Condition text with the player's current figure, e.g. '누적 수익 800G (현재 120G)'."""

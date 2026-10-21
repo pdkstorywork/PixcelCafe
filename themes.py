@@ -38,8 +38,8 @@ PARTS = ('table', 'seat', 'decoration', 'corner', 'stand', 'wall', 'floor', 'sig
 PRICE = dict(table=2400, seat=3800, decoration=2100, corner=1300, stand=3000,
              wall=2200, floor=2200, sign=4500, light=2500, hair=3300,
              outfit_1=3000, outfit_2=3600, accessory_1=2400, accessory_2=3000)
-BONUS = dict(table=.04, seat=.03, decoration=.02, corner=.02, stand=.03, wall=.02, floor=.02,
-             sign=.03, light=.02, hair=.015, outfit_1=.02, outfit_2=.02, accessory_1=.01, accessory_2=.015)
+BONUS = dict(table=.02, seat=.01, decoration=.01, corner=.01, stand=.01, wall=.01, floor=.01,
+             sign=.01, light=.01, hair=.01, outfit_1=.01, outfit_2=.01, accessory_1=.01, accessory_2=.01)
 PREMIUM_PRICE, PREMIUM_BONUS = 2.2, 1.5
 
 FURN_SLOT = {'table': 'tableL', 'seat': 'tableR', 'decoration': 'plant2', 'corner': 'plant',
@@ -155,7 +155,7 @@ def install(cafe):
         return shop_price(value)
 
     def bonus(theme, part):
-        return round(BONUS[part] * (PREMIUM_BONUS if theme == 'golden' else 1), 4)
+        return max(.01, round(BONUS[part] * (PREMIUM_BONUS if theme == 'golden' else 1), 2))
 
     def furn_drawer(theme, part, pos):
         def draw(s, t):

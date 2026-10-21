@@ -44,9 +44,9 @@ PLACEHOLDER = {   # body, belly, accent
 VARIANT_COLOR = {'strawberry': (255, 150, 170), 'choco': (170, 120, 90),
                  'gold': (255, 215, 90), 'rainbow': (200, 170, 255)}
 OCCASIONS = ('spring', 'summer', 'autumn', 'winter', 'newyear', 'valentine', 'halloween', 'christmas')
-OCC_NAME = {'spring': '봄나들이 손님', 'summer': '여름휴가 손님', 'autumn': '단풍놀이 손님',
-            'winter': '겨울나기 손님', 'newyear': '새해맞이 손님', 'valentine': '발렌타인 손님',
-            'halloween': '할로윈 손님', 'christmas': '크리스마스 손님'}
+OCC_NAME = {'spring': '봄나들이', 'summer': '여름휴가', 'autumn': '단풍놀이',
+            'winter': '겨울나기', 'newyear': '새해맞이', 'valentine': '발렌타인',
+            'halloween': '할로윈', 'christmas': '크리스마스'}
 OCC_HINT = {'spring': '3~5월에 방문', 'summer': '6~8월에 방문', 'autumn': '9~11월에 방문',
             'winter': '12~2월에 방문', 'newyear': '1월 1~7일에 방문', 'valentine': '2월 7~14일에 방문',
             'halloween': '10월 24~31일에 방문', 'christmas': '12월 18~26일에 방문'}
@@ -93,10 +93,8 @@ GUEST_HINT = {
     'gudetama': '축 늘어진 노른자 친구',
 }
 # companions ("동료"): a guest met in the cafe can be invited to stay for a permanent income bonus.
-#   tier: (bonus each, friendship Lv needed, gold = best bread price x this, companions needed first)
-# normal: just meet them and pay.  rare: become true friends (max friendship) first.
-# family: befriend that seasonal family (Lv.3).  legend: one visit is enough, but you must already
-# run a crew of rare/family companions and pay a fortune -- the endgame gold sink.
+# Every tier can be recruited after one recorded visit by paying its gold cost.
+# MATE_RULES retains the legacy requirement fields for compatibility.
 MATE_ZONE = (112, 66, 228, 84)      # back aisle between the counter and the oven: no furniture stands here
 MATE_TIER_NAME = {'normal': '일반 손님', 'rare': '희귀 손님', 'family': '가족 손님', 'legend': '전설 손님'}
 
@@ -121,6 +119,17 @@ FAMILY_ASSETS = {
     '미예언니가족': 'family_miye.png',
 }
 
+# Saved family IDs stay unchanged when display names change.
+FAMILY_DISPLAY_NAMES = {
+    '배지가족': '배지', '지현가족': '지현', '도경가족': '도경',
+    '진예가족': '진예', '지영가족': '지영', '미예언니가족': '미예언니',
+}
+
+
+def family_display_name(name):
+    return FAMILY_DISPLAY_NAMES.get(name, name)
+
+
 # mini bar designs: unlocked by achievements (colors only, no art needed)
 SKINS = (
     dict(id='brown', name='기본 갈색', ach=None, fill=(112, 74, 52), edge=(58, 36, 26), text=(255, 240, 200),
@@ -139,7 +148,7 @@ SKINS = (
          light=(78, 72, 96), btn=(236, 214, 150), inc=(255, 226, 130)),
 )
 SKIN_BY_ID = {k['id']: k for k in SKINS}
-# achievement rewards: permanent income bonus + one-time gold (x best bread price)
+# Achievement rewards: permanent income bonus (plus toolbar designs for some achievements).
 
 
 def occasion(today=None):
@@ -231,6 +240,16 @@ def install(cafe):
             return NAMED_FAMILY[name][0]
         return next((k for k, v in sorted(FAMILY_LOOKS.items()) if v == name), 1)
     famlooks = [_canon_look(n) for n in famnames]
+    seasonal = [(f'fam_{o}:{n}', o, n) for o in OCCASIONS for n in famnames]
+    seasonal_ids = [key for key, _, _ in seasonal]
+
+    def seasonal_label(occ, name):
+        return f'{OCC_NAME[occ]} {family_display_name(name)}'
+
+    def legacy_mates(game):
+        # Old occasion-only records cannot identify a person. Keep owned ones usable.
+        return [k for k in game.col['mates'] if k.startswith('fam_') and ':' not in k]
+
     save_path = os.path.join(cafe.SAVE_DIR, 'collection.json')
 
     # ---- art: file first, code-drawn placeholder second --------------------
@@ -279,13 +298,14 @@ def install(cafe):
             base = _load_png(pygame, filename, (24, 34))
             if base is None:
                 raise FileNotFoundError(f'Named family guest asset missing: {filename}')
-            image = cafe.art.walk(base, frame % 3, facing)
-            cache[key] = image
-            return image
-        filename = FAMILY_ASSETS.get(FAMILY_LOOKS.get(appearance))
-        base = _load_png(pygame, filename, (24, 34)) if filename else None
+        else:
+            filename = FAMILY_ASSETS.get(FAMILY_LOOKS.get(appearance))
+            base = _load_png(pygame, filename, (24, 34)) if filename else None
         base = (cafe.art.walk(base, frame % 3, facing) if base is not None
                 else original_family(appearance, frame, facing))
+        if occ is None:
+            cache[key] = base
+            return base
         w, h = base.get_size()
         over = (_load_png(pygame, f'family_{appearance}_{occ}.png', (w, h))
                 or _load_png(pygame, f'family_{occ}.png', (w, h)))
@@ -339,7 +359,7 @@ def install(cafe):
         normals = [f'n_{sp}_{v}' for sp, looks in cafe.SPECIES.items() for v in range(len(looks))]
         groups = [('a_normal', '일반 손님 박사', normals), ('a_rare', '희귀 손님 수집가', list(rare_ids)),
                   ('a_legend', '전설을 만난 자', list(legend_ids)),
-                  ('a_famev', '사계절 손님 앨범', ['fam_' + o for o in OCCASIONS]),
+                  ('a_famev', '사계절 손님 앨범', seasonal_ids),
                   ('a_famname', '가족 이름 대장', ['famn_' + n for n in famnames]),
                   ('a_famlook', '가족 외형 대장', [f'fama_{i}' for i in famlooks])]
         defs = []
@@ -392,21 +412,17 @@ def install(cafe):
         for aid, name, have, total in ach_defs():
             if aid in game.col['ach'] or have(game) < total:
                 continue
-            pct_, gold_mult = reward_of(aid)
-            best = max((original_price(game, r) for r in cafe.RECIPES if game.rlv[r['id']] > 0), default=40)
-            gold = round(best * gold_mult)
+            pct_ = reward_of(aid)
             game.col['ach'].append(aid)
-            game.money += gold
-            game.total += gold
             flag(game, 'a:' + aid)
             skin = next((k for k in SKINS if k['ach'] == aid), None)
             if skin:
                 flag(game, 's:' + skin['id'])
-            game.toast(f'업적 달성! {name} · 수익 +{pct_ * 100:g}% · +{cafe.fmt(gold)}'
+            game.toast(f'업적 달성! {name} · 수익 +{pct_ * 100:g}%'
                        + (f' · 디자인 {skin["name"]}' if skin else ''))
 
     def mate_tier(key):
-        return ('normal' if key.startswith(('n_', 'fam_')) else 'family' if key.startswith('famn_') else
+        return ('normal' if key.startswith('n_') else 'family' if key.startswith(('famn_', 'fam_')) else
                 'legend' if key in legend_ids else 'rare')
 
     def fam_look(name):
@@ -414,12 +430,17 @@ def install(cafe):
         return _canon_look(name)
 
     def fam_label(key):
-        return key[5:] if key.startswith('famn_') else OCC_NAME[key[4:]]
+        if key.startswith('famn_'):
+            return family_display_name(key[5:])
+        occ, _, name = key[4:].partition(':')
+        return seasonal_label(occ, name) if name else f'{OCC_NAME[occ]} (이전 기록)'
 
     def fam_image(key, frame=0, facing=1):
         if key.startswith('famn_'):
-            return family_composite(fam_look(key[5:]), frame, facing, occasion())
-        return family_composite(1 + OCCASIONS.index(key[4:]), frame, facing, key[4:])
+            return family_composite(fam_look(key[5:]), frame, facing, None)
+        occ, _, name = key[4:].partition(':')
+        look = fam_look(name) if name else 1 + OCCASIONS.index(occ)
+        return family_composite(look, frame, facing, occ)
 
     def mate_lv(col, key):
         return max(1, min(MATE_MAX_LV, col.get('mate_lv', {}).get(key, 1)))
@@ -435,7 +456,7 @@ def install(cafe):
         found = sum(len(v) for v in col['variants'].values())
         mates = sum(mate_bonus(col, k) for k in col.get('mates', ()))
         return (1.0 + FRIEND_BONUS * friend + VARIANT_BONUS * found + mates
-                + sum(reward_of(a)[0] for a in col.get('ach', ())))
+                + sum(reward_of(a) for a in col.get('ach', ())))
 
     def price(self, recipe):
         return round(original_price(self, recipe) * bonus(self))
@@ -502,9 +523,9 @@ def install(cafe):
             self.customers.append(c)
             self.toast(f'★ 전설 손님 {specials.SPECIAL[name]} 등장! 빵 값의 {LEGEND_MULT}배를 내요')
         elif roll < LEGEND_P + family_p:
-            key = pick_guest(self, ['famn_' + n for n in famnames], 'family_name')
-            name = key[5:]
             occ = occasion()
+            key = pick_guest(self, [f'fam_{occ}:{n}' for n in famnames], f'family:{occ}')
+            name = key.split(':', 1)[1]
             count = 1      # family guests arrive one at a time
             for i in range(count):
                 c = Customer(self, plan if i == 0 else (self.make_plan() or list(plan)), 'family', name)
@@ -514,7 +535,7 @@ def install(cafe):
                     c.species = 'human'
                 c.y += i * 6
                 self.customers.append(c)
-            self.toast(f'{OCC_NAME[occ]}({name})이 왔어요! 빵 값의 {cafe.FAMILY_MULT}배를 내요')
+            self.toast(f'{seasonal_label(occ, name)} 방문! 빵 값의 {cafe.FAMILY_MULT}배를 내요')
         elif roll < LEGEND_P + family_p + rare_p:
             name = pick_guest(self, rare_ids, 'rare')
             c = Customer(self, plan, 'rare', name)
@@ -550,17 +571,18 @@ def install(cafe):
                 flag(game, 'g:' + nkey)
                 game.toast(f'도감 등록! {normal_label(customer.species, customer.var)}')
             return
-        key = 'fam_' + getattr(customer, 'occ', occasion()) if tier == 'family' else customer.name
-        label = OCC_NAME.get(key[4:], key) if tier == 'family' else specials.SPECIAL.get(key, key)
+        key = (f'fam_{getattr(customer, "occ", occasion())}:{customer.name}'
+               if tier == 'family' else customer.name)
+        label = fam_label(key) if tier == 'family' else specials.SPECIAL.get(key, key)
         e = entry(game, key)
-        if tier != 'family':
-            record_discovery(game.col['pity'], tier, e['v'] == 0)
+        pool = f'family:{customer.occ}' if tier == 'family' else tier
+        record_discovery(game.col['pity'], pool, e['v'] == 0)
         e['v'] += 1
         if e['v'] == 1:
             flag(game, 'g:' + key)
             game.toast(f'도감 등록! {label}')
         if tier == 'family':        # family name / look dex: registration only, no friendship
-            for xkey, xlabel in (('famn_' + str(customer.name), str(customer.name)),
+            for xkey, xlabel in (('famn_' + str(customer.name), family_display_name(customer.name)),
                                  (f'fama_{customer.appearance}', f'가족 외형 {customer.appearance}')):
                 xe = entry(game, xkey)
                 record_discovery(game.col['pity'], 'family_name' if xkey.startswith('famn_')
@@ -617,7 +639,7 @@ def install(cafe):
             if first:
                 self.last_variant = (rid, vid, vname)      # the toolbar bar shows this variant's icon
                 flag(self, f'v:{vid}_{rid}')
-                self.toast(f'변종 발견! {vname} {cafe.RECIPE[rid]["name"]} (수익 +{VARIANT_BONUS * 100:.1f}%)')
+                self.toast(f'변종 발견! {vname} {cafe.RECIPE[rid]["name"]} (수익 +{VARIANT_BONUS * 100:g}%)')
         if extra:
             self.money += extra
             self.total += extra
@@ -630,7 +652,7 @@ def install(cafe):
         if tier == 'normal' or customer.kind == 'normal':
             return SPECIES_NAME.get(customer.species, customer.species)
         if tier == 'family':
-            return OCC_NAME.get(getattr(customer, 'occ', occasion()), '가족 손님')
+            return seasonal_label(getattr(customer, 'occ', occasion()), customer.name)
         return specials.SPECIAL.get(customer.name, str(customer.name))
 
     cafe.guest_label = guest_label
@@ -644,6 +666,9 @@ def install(cafe):
         return color.r, color.g, color.b
 
     def draw_label(self, s):
+        if self.kind == 'family':
+            return cafe.text(s, seasonal_label(getattr(self, 'occ', occasion()), self.name), 10, (150, 232, 255),
+                             self.sx, self.sy + 2, True, 'tc', shadow=cafe.INK)
         if getattr(self, 'tier', '') != 'legend':
             return original_label(self, s)
         name = specials.SPECIAL.get(self.name, self.name)
@@ -675,7 +700,7 @@ def install(cafe):
         if tier == 'rare':
             return '희귀 손님'
         if tier == 'family':
-            return f'등장: {hint}'
+            return f'가족 손님 · 등장: {hint}'
         return '일반 손님'
 
     def guest_row(game, key, name, image, hint, kind_label, tier='rare'):
@@ -740,8 +765,7 @@ def install(cafe):
 
     def dex_rows(game, sub):
         if sub == 'normal':
-            return [*normal_rows(game), *staff_dex_rows(game),
-                    dict(kind='hdr', name='계절·기념일 손님'), *dex_rows(game, 'fam_occasion')]
+            return [*normal_rows(game), *staff_dex_rows(game)]
         if sub in ('rare', 'legend'):
             ids = rare_ids if sub == 'rare' else legend_ids
             label = '희귀 손님' if sub == 'rare' else '전설 손님'
@@ -750,39 +774,26 @@ def install(cafe):
         if sub == 'family':          # one list: each family name followed by its own looks
             rows = []
             for i, n in enumerate(famnames):
-                rows.append(simple_row(game, 'famn_' + n, n,
-                                       family_composite(_canon_look(n), 0, 1, occasion()), '가족 손님',
+                rows.append(simple_row(game, 'famn_' + n, family_display_name(n),
+                                       family_composite(_canon_look(n), 0, 1, None), '가족 손님',
                                        FAMILY_HINT.get(n, '')))
-            return rows
+            return [*rows, dict(kind='hdr', name='계절·기념일 가족'),
+                    *dex_rows(game, 'fam_occasion')]
         if sub == 'famname':
-            return [simple_row(game, 'famn_' + n, n,
-                               family_composite(_canon_look(n), 0, 1, occasion()), '가족 손님', FAMILY_HINT.get(n, ''))
+            return [simple_row(game, 'famn_' + n, family_display_name(n),
+                               family_composite(_canon_look(n), 0, 1, None), '가족 손님', FAMILY_HINT.get(n, ''))
                     for i, n in enumerate(famnames)]
         if sub == 'famlook':
-            return [simple_row(game, f'fama_{i}', (named_looks[i][0] if i in named_looks else FAMILY_LOOKS.get(i, f'가족 외형 {i}')) + ' 외형',
-                               family_composite(i, 0, 1, occasion()), '가족 손님',
+            return [simple_row(game, f'fama_{i}', family_display_name(named_looks[i][0] if i in named_looks else FAMILY_LOOKS.get(i, f'가족 외형 {i}')) + ' 외형',
+                               family_composite(i, 0, 1, None), '가족 손님',
                                FAMILY_HINT.get(named_looks[i][0] if i in named_looks else FAMILY_LOOKS.get(i), ''))
                     for i in famlooks]
-        return [guest_row(game, 'fam_' + o, OCC_NAME[o], family_composite(1 + i, 0, 1, o),
-                          OCC_HINT[o], '일반 손님', 'family') for i, o in enumerate(OCCASIONS)]
+        return [guest_row(game, key, seasonal_label(o, n), family_composite(_canon_look(n), 0, 1, o),
+                          OCC_HINT[o], '가족 손님', 'family') for key, o, n in seasonal]
 
     def mate_cost(game, tier):
         best = max((original_price(game, r) for r in cafe.RECIPES if game.rlv[r['id']] > 0), default=40)
         return int(nice_number(best * MATE_RULES[tier][2]))
-
-    def mate_block(game, key, tier):
-        """Why this guest cannot be invited yet ('' when every condition is met)."""
-        _b, need_lv, _g, need_mates = MATE_RULES[tier]
-        e = game.col['guests'].get(key, {})
-        if key.startswith('famn_'):      # family names gain no friendship level: visits stand in for it
-            if e.get('v', 0) < STEPS[need_lv - 1]:
-                return f'방문 {STEPS[need_lv - 1]}회 필요 (지금 {e.get("v", 0)}회)'
-        elif e.get('lv', 0) < need_lv:
-            return f'우정 Lv.{need_lv} 필요 (지금 Lv.{e.get("lv", 0)} · 방문 {e.get("v", 0)}회)'
-        crew = sum(mate_tier(k) in ('rare', 'family') for k in game.col['mates'])
-        if crew < need_mates:
-            return f'희귀·가족 동료 {need_mates}명 필요 (지금 {crew}명)'
-        return ''
 
     STAFF_GUEST = {'apprentice': '제빵사 손님', 'clerk': '회사원 손님', 'barista': '바리스타 손님', 'rider': '배민 손님',
                    'patissier': '파티시에 손님', 'chef': '수석 셰프 손님'}
@@ -816,9 +827,9 @@ def install(cafe):
         if tier == 'normal':
             items = [(f'n_{sp}_{v}', normal_label(sp, v), animal_icon(sp, v))
                      for sp, looks in cafe.SPECIES.items() for v in range(len(looks))]
-            items += [(k, fam_label(k), fam_image(k)) for k in ['fam_' + o for o in OCCASIONS]]
         elif tier == 'family':
-            items = [(k, fam_label(k), fam_image(k)) for k in ['famn_' + n for n in famnames]]
+            items = [(k, fam_label(k), fam_image(k))
+                     for k in ['famn_' + n for n in famnames] + seasonal_ids + legacy_mates(game)]
         else:
             items = [(k, specials.SPECIAL[k], special_surf(k, 0, 1)) for k in (rare_ids if tier == 'rare' else legend_ids)]
         cost = mate_cost(game, tier)
@@ -838,10 +849,9 @@ def install(cafe):
                                  icon=fit(silhouette(image)), price='',
                                  sub=f'수익 +{bonus_each * 100:g}% · 가게 방문 후 동료 해금'))
             else:
-                why = mate_block(game, key, tier)
-                rows.append(dict(kind='mate', id=key, name=name, icon=fit(image), ok=not why and game.money >= cost,
-                                 state='locked' if why else 'buy', price=f'영입 {cafe.fmt(cost)}',
-                                 sub=why or f'수익 +{bonus_each * 100:g}%'))
+                rows.append(dict(kind='mate', id=key, name=name, icon=fit(image), ok=game.money >= cost,
+                                 state='buy', price=f'영입 {cafe.fmt(cost)}',
+                                 sub=f'수익 +{bonus_each * 100:g}%'))
         if tier == 'normal':        # the pricey staff hires sit below the ordinary guests
             rows += staff_rows(game)
         return rows
@@ -915,7 +925,7 @@ def install(cafe):
             return
         tier = mate_tier(key)
         cost = mate_cost(game, tier)
-        if key in game.col['mates'] or not seen(game, key) or mate_block(game, key, tier):
+        if not seen(game, key):
             return
         if game.money < cost:
             game.toast(f'골드가 부족해요 ({cafe.fmt(cost)} 필요)')
@@ -979,9 +989,9 @@ def install(cafe):
         if sub == 'ach_list':
             for aid, name, have, total in ach_defs():
                 done = aid in done_ids
-                pct_, mult = reward_of(aid)
+                pct_ = reward_of(aid)
                 skin = next((k for k in SKINS if k['ach'] == aid), None)
-                reward = f'수익 +{pct_ * 100:g}% · 골드'
+                reward = f'수익 +{pct_ * 100:g}%'
                 icon = trophy_icon(done)
                 if skin:
                     reward = f'툴바 디자인 [{skin["name"]}] ' + ('획득' if done else '해금') + f' · 수익 +{pct_ * 100:g}%'
@@ -1033,8 +1043,8 @@ def install(cafe):
             return ('ach', 'ach_list')
         if kind == 's':
             return ('ach', 'ach_skin')
-        sub = ('normal' if rest.startswith(('n_', 'fam_')) else
-               'family' if rest.startswith(('famn_', 'fama_')) else
+        sub = ('normal' if rest.startswith('n_') else
+               'family' if rest.startswith(('famn_', 'fama_', 'fam_')) else
                'legend' if rest in legend_ids else 'rare')
         return ('guest', sub)
 
@@ -1185,8 +1195,8 @@ def install(cafe):
         guests = game.col['guests']
         normals = [f'n_{sp}_{v}' for sp, looks in cafe.SPECIES.items() for v in range(len(looks))]
         seen = lambda k: guests.get(k, {}).get('v', 0) > 0
-        fam = ['fam_' + o for o in OCCASIONS]
-        groups = dict(normal=normals + fam, rare=rare_ids, family=[], legend=legend_ids,
+        fam = seasonal_ids
+        groups = dict(normal=normals, rare=rare_ids, family=fam, legend=legend_ids,
                       famname=['famn_' + n for n in famnames], famlook=[f'fama_{i}' for i in famlooks])
         out = {k: f'{sum(seen(i) for i in v)}/{len(v)}' for k, v in groups.items()}
         every = groups['family'] + groups['famname'] + groups['famlook']
@@ -1196,7 +1206,8 @@ def install(cafe):
         defs = ach_defs()
         out['ach'] = out['ach_list'] = f'{sum(d[0] in game.col["ach"] for d in defs)}/{len(defs)}'
         mates = game.col['mates']
-        tiers = dict(m_normal=normals + fam, m_rare=rare_ids, m_family=groups['famname'], m_legend=legend_ids)
+        tiers = dict(m_normal=normals, m_rare=rare_ids,
+                     m_family=groups['famname'] + fam + legacy_mates(game), m_legend=legend_ids)
         for sid, ids in tiers.items():
             out[sid] = f'{sum(i in mates for i in ids)}/{len(ids)}'
         out['mate'] = f'{len(mates)}/{sum(map(len, tiers.values()))}'
@@ -1208,7 +1219,9 @@ def install(cafe):
     original_draw_row = UI.draw_row
 
     def draw_row(self, ui, rect, r, mouse, area):
-        result = original_draw_row(self, ui, rect, r, mouse, area)
+        # Undiscovered companions have no purchase action or generic "구매" button.
+        base_row = dict(r, kind='none') if r.get('kind') == 'mate' and r.get('state') == 'locked' else r
+        result = original_draw_row(self, ui, rect, base_row, mouse, area)
         if r.get('sub2'):       # condition continues on a second line instead of being cut off
             size = 12       # stay left of the buy button in the bottom-right corner
             while size > 9 and cafe.font(size).size(r['sub2'])[0] > rect.w - 66 - 96:

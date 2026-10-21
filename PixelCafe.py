@@ -43,6 +43,7 @@ small.install_staff_art(sys.modules[__name__])
 import collection as _collection
 _collection.install(sys.modules[__name__])
 small.install_rare_dialog(sys.modules[__name__])
+small.install_customer_facing(sys.modules[__name__])
 import themes as _themes
 _themes.install(sys.modules[__name__])
 mini.install_mini_bar(sys.modules[__name__])
