@@ -187,7 +187,8 @@ def install_mini_bar(cafe):
     def enter(game, keep_position=False):
         position = cafe.win_pos() if keep_position else None
         game._mini_pos_stash = position or game.mini_pos
-        game.mini_pos = (position or game.mini_pos) if keep_position else default_pos()
+        game.mini_pos = (position or game.mini_pos) if keep_position else (
+            getattr(game, '_bar_pos', None) or default_pos())      # back where the toolbar was last left
         if keep_position and game.mini_pos is not None:
             # collapse toward the mini window's bottom edge: the bar's bottom lines up with it
             x, y = game.mini_pos
@@ -198,7 +199,13 @@ def install_mini_bar(cafe):
         game.mode_dirty = True
 
     def leave(game):
-        game.mini_pos = getattr(game, '_mini_pos_stash', None) or mini_default_pos()
+        bar_pos = cafe.win_pos() or game.mini_pos
+        game._bar_pos = bar_pos
+        if bar_pos is not None:
+            # expand upward from the toolbar: same left edge, bottoms line up (mirror of enter())
+            game.mini_pos = (bar_pos[0], bar_pos[1] + WIN_H - int(LOGICAL[1] * VIEW))
+        else:
+            game.mini_pos = getattr(game, '_mini_pos_stash', None) or mini_default_pos()
         if ref['drag']:
             ctypes.windll.user32.ReleaseCapture()
             ref['drag'] = None
@@ -771,7 +778,16 @@ def install_mini_bar(cafe):
             on_bar = logical_pos is not None and logical_pos[1] // 2 >= ROW_Y - 2
             origin = cafe.win_pos() if on_bar else None
             st.update(start=cursor() if origin is not None else None, origin=origin, moving=False)
+            hwnd = pg.display.get_wm_info().get('window') if origin is not None else None
+            if hwnd:
+                ctypes.windll.user32.SetCapture(ctypes.c_void_p(hwnd))   # keep the release even outside the window
         elif event.type == pg.MOUSEMOTION and st['start'] is not None:
+            if not ctypes.windll.user32.GetAsyncKeyState(0x01) & 0x8000:
+                # the release was missed (cursor left the window): stop following the cursor
+                st.update(start=None, moving=False)
+                if ctypes.windll.user32.GetCapture():
+                    ctypes.windll.user32.ReleaseCapture()
+                return False
             x, y = cursor()
             sx, sy = st['start']
             if not st['moving'] and abs(x - sx) + abs(y - sy) < DRAG_THRESHOLD:
@@ -784,6 +800,7 @@ def install_mini_bar(cafe):
         elif event.type == pg.MOUSEBUTTONUP and event.button == 1 and st['start'] is not None:
             moved = st['moving']
             st.update(start=None, moving=False)
+            ctypes.windll.user32.ReleaseCapture()
             if moved:
                 game.mini_pos = cafe.win_pos() or game.mini_pos
                 return True          # a drag is not a click
@@ -880,8 +897,8 @@ def install_mini_window(cafe):
             for event in events:
                 if event.type == pg.WINDOWMINIMIZED and api and not game.mini:
                     game.mini = True
-                    api.enter(game)
-                    user32.ShowWindow(hwnd(), 9)
+                    user32.ShowWindow(hwnd(), 9)       # restore first so win_pos() is the real position
+                    api.enter(game, keep_position=True)
                     break
         except Exception:
             pass
