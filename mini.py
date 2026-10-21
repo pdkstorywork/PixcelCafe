@@ -118,12 +118,18 @@ def install_mini_view(cafe):
 import ctypes
 import time
 
-BAR_W, BAR_H = 260, 32
+BAR_W, BAR_H = 320, 32
 BUB_H = 42                      # transparent strip above the bar for the speech bubble
 WIN_W, WIN_H = BAR_W, BAR_H + BUB_H
 NOTE_SECONDS = 6.0
 ALPHA_IDLE, ALPHA_HOVER = 150, 255   # bar opacity (0-255); fully opaque while hovered
-NOTE_WORDS = ('도감', '손님', '등장', '우정', '변종', '선물', '업적')
+NOTE_WORDS = ('도감', '손님', '등장', '우정', '변종', '선물', '업적', '새 레시피')
+NOTE_NO_FACE = ('세일', '새 레시피')     # messages that are not about the guest who just paid
+# lower = more important; only sale/unlock news (rank 4) is dropped when two notes are already waiting
+NOTE_RANK = (('전설', 0), ('희귀', 1), ('업적', 2), ('우정', 2), ('변종', 2))
+SALE_SECONDS = 2.5              # how long the "who bought what" text replaces the per-minute income
+SCROLL_PX = 45                  # px/s a long payment line scrolls through the income slot
+BIG_SALE_MULT, BIG_SALE_MIN, BIG_SALE_GAP = 4.0, 12, 90.0   # x average sale, sales needed, seconds between
 # mini bar buttons (logical 320x228 coordinates): settings sits right of the gold amount,
 # minimize takes the old settings slot.
 MIN_RECT = (222, 210, 22, 16)
@@ -365,16 +371,89 @@ def install_mini_bar(cafe):
             return True
         return False
 
+    # ---- portrait / landscape: toolbar-mode button, landscape always windowed ------
+    UI = cafe.UI
+    original_click = UI.click
+    original_ui_init = UI.__init__
+
+    def ui_init(self, *args, **kwargs):
+        original_ui_init(self, *args, **kwargs)
+        ref['ui'] = self        # the bar's gear button opens this instance's settings dialog
+
+    UI.__init__ = ui_init
+
+    def click(self, pos, game, *args, **kwargs):
+        if not self.settings_open:
+            for hit in self.hit:
+                if hit[1] == 'btn' and hit[2] == 'bar' and hit[0].collidepoint(pos):
+                    game.mini = True
+                    enter(game)
+                    return True
+        return original_click(self, pos, game, *args, **kwargs)
+
+    UI.click = click
+
+    original_apply_mode = cafe.apply_mode
+    last_view = {}
+
+    def apply_mode(game, *args, **kwargs):
+        view = 'mini' if game.mini else ('portrait' if game.portrait else 'landscape')
+        if view == 'landscape' and last_view.get('v') not in (None, 'landscape'):
+            game.fullscreen = False          # switching to landscape opens a window, not fullscreen
+        last_view['v'] = view
+        return original_apply_mode(game, *args, **kwargs)
+
+    cafe.apply_mode = apply_mode
+
+    pg.K_m = -1      # the M-key shortcut to mini mode is gone (main() compares ev.key == pygame.K_m)
+
     # ---- notifications --------------------------------------------------------------
     original_toast = Game.toast
     original_paid = Game.customer_paid
 
+    def josa(word, with_batchim, without):
+        code = ord(word[-1]) - 0xAC00 if word else -1
+        return with_batchim if 0 <= code < 11172 and code % 28 else without
+
+    def sale_note(game, customer, amount):
+        """Bar only: show 'who bought what' in the income slot; a rare big sale also gets a bubble."""
+        cart = [rid for rid in customer.cart if rid in cafe.RECIPE]
+        if not cart or amount <= 0:
+            return
+        who = cafe.guest_label(customer)
+        top = max(cart, key=lambda rid: game.price(cafe.RECIPE[rid]))
+        bread = cafe.RECIPE[top]['name'] + (f' 외 {len(cart) - 1}개' if len(cart) > 1 else '')
+        gold = cafe.fmt(amount)
+        # a talking guest's payment line replaces the plain sentence; '*action*' lines only if nothing else
+        said = [line.strip() for line in getattr(customer, 'happy_say', None) or ()]
+        said = next((line for line in said if not line.startswith('*')), said[0].strip('*') if said else '')
+        face = face_of(customer) if said else None
+        if face and face.get_height() > 22:
+            face = pg.transform.smoothscale(face, (max(1, face.get_width() * 22 // face.get_height()), 22))
+        ref['sale'] = dict(who=who, bread=bread, amount=gold, said=said, face=face, start=time.time())
+        now = time.time()
+        avg, count = ref.get('sale_avg', 0.0), ref.get('sale_count', 0)
+        if (count >= BIG_SALE_MIN and amount >= avg * BIG_SALE_MULT
+                and now - ref.get('big_at', 0.0) >= BIG_SALE_GAP):
+            ref['big_at'] = now
+            add_note(f'{who}{josa(who, "이", "가")} {bread}에 +{gold}를 썼어요', 4, face_of(customer))
+        ref['sale_avg'] = avg + (amount - avg) / min(count + 1, 30)
+        ref['sale_count'] = count + 1
+
     def customer_paid(self, customer, *args, **kwargs):
         ref['customer'] = customer      # lets toast() know who a dex/friendship toast is about
+        first = not customer.paid
+        self.last_sale = None
         try:
             return original_paid(self, customer, *args, **kwargs)
         finally:
             ref['customer'] = None
+            sale = getattr(self, 'last_sale', None)
+            if first and self.bar and sale and sale[0] is customer:
+                try:
+                    sale_note(self, customer, sale[1])
+                except Exception:
+                    pass
 
     Game.customer_paid = customer_paid
 
@@ -401,11 +480,35 @@ def install_mini_bar(cafe):
         except Exception:
             return None
 
+    def add_note(msg, rank, face=None):
+        """Queue a bar bubble; sale/unlock news (rank 4) is skipped when the queue is already busy."""
+        if any(note[0] == msg for note in notes) or (len(notes) >= 2 and rank >= 4):
+            return
+        notes.append([msg, time.time() + NOTE_SECONDS, face])
+
+    def variant_face(game):
+        """The found variant's bread-with-sticker icon, so the bubble shows which variant it was."""
+        found = getattr(game, 'last_variant', None)
+        try:
+            icon = cafe.variant_icon(found[0], found[1])
+            return pg.transform.scale(icon, (28, 28)) if icon.get_width() != 28 else icon
+        except Exception:
+            return None
+
     def toast(self, msg):
         original_toast(self, msg)
         if self.bar and any(word in msg for word in NOTE_WORDS):
-            who = ref.get('customer') or (self.customers[-1] if self.customers else None)
-            notes.append([msg, time.time() + NOTE_SECONDS, face_of(who) if who else None])
+            if '새 레시피' in msg:      # "N일차 · 새 레시피 해금: ..." would be cut at the first " · "
+                msg = '새 레시피 해금: ' + msg.split('새 레시피 해금:')[-1].strip()
+            face = None
+            if '변종 발견' in msg and getattr(self, 'last_variant', None):
+                rid, vid, vname = self.last_variant     # "변종 발견! 딸기 식빵 (...)" would be cut at the "!"
+                msg, face = f'변종 발견 {vname} {cafe.RECIPE[rid]["name"]}', variant_face(self)
+            elif not any(word in msg for word in NOTE_NO_FACE):
+                who = ref.get('customer') or (self.customers[-1] if self.customers else None)
+                face = face_of(who) if who else None
+            rank = next((rank for word, rank in NOTE_RANK if word in msg), 4 if any(w in msg for w in NOTE_NO_FACE) else 3)
+            add_note(msg, rank, face)
 
     Game.toast = toast
 
@@ -502,25 +605,69 @@ def install_mini_bar(cafe):
         win.blit(bar_surface(skin), bar)
         gold = cafe.text(win, cafe.fmt(game.money), 14, skin['text'], 10, bar.centery, True, 'ml', False, True)
         per_min = f'+{cafe.fmt(game.inc * 60)}/분'
-        cafe.text(win, per_min, 11, skin['text'], (gold.right if gold else 60) + 6, bar.centery, True, 'ml', False, False)
+        left = (gold.right if gold else 60) + 6
+        sale = ref.get('sale')
+        if sale:
+            # a purchase replaces the per-minute income for a moment; a talking guest's line gets a face and scrolls
+            who, bread, amount, said, face = sale['who'], sale['bread'], sale['amount'], sale['said'], sale['face']
+            shift = face.get_width() + 4 if face else 0
+            room, font = BAR_W - 154 - 6 - left - shift, cafe.font(11, True)
+            overflow, elapsed = 0, now - sale['start']
+            if said:
+                per_min = f'{who}: {said} +{amount}'
+                overflow = max(0, font.size(per_min)[0] - room)
+                life = 0.8 + overflow / SCROLL_PX + 1.4
+            else:
+                per_min = next((line for line in (
+                    f'{who}{josa(who, "이", "가")} {bread}{josa(bread, "을", "를")} 사갔어요 +{amount}',
+                    f'{who}{josa(who, "이", "가")} {bread} 구매 +{amount}', f'{who} · {bread} +{amount}',
+                    f'{who} +{amount}') if font.size(line)[0] <= room), f'+{amount}')
+                life = SALE_SECONDS
+            if elapsed < life:
+                if face:
+                    win.blit(face, face.get_rect(midleft=(left, bar.centery)))
+                win.set_clip(pg.Rect(left + shift, bar.y, room + 4, BAR_H))
+                cafe.text(win, per_min, 11, skin['text'], left + shift - min(overflow, max(0, elapsed - 0.8) * SCROLL_PX),
+                          bar.centery, True, 'ml', False, False)
+                win.set_clip(None)
+                per_min = None
+            else:
+                ref['sale'] = None
+        if per_min:
+            cafe.text(win, per_min, 11, skin['text'], left, bar.centery, True, 'ml', False, False)
         btns = {}
         x = 108
         rect = pg.Rect(BAR_W - 34, bar.y + 6, 22, 20)
         btns['quit'] = rect
         button(win, rect, 'X', rect.collidepoint(mouse), False, skin['btn'])
-        rect = pg.Rect(BAR_W - 64, bar.y + 6, 26, 20)
-        btns['restore'] = rect
-        button(win, rect, '', rect.collidepoint(mouse), False, skin['btn'])
-        inner = rect.inflate(-12, -10)
-        pg.draw.rect(win, cafe.BROWN_D, inner, 2)
+        # mode buttons, left to right: mini - landscape - portrait
+        for key, offset, size in (('portrait', 64, (7, 11)), ('landscape', 94, (12, 7)), ('restore', 124, None),
+                                  ('settings', 154, 'gear')):
+            rect = pg.Rect(BAR_W - offset, bar.y + 6, 26, 20)
+            btns[key] = rect
+            button(win, rect, '', rect.collidepoint(mouse), False, skin['btn'])
+            if size == 'gear':
+                draw_gear(win, rect.center, cafe.BROWN_D, cafe.ACCENT if rect.collidepoint(mouse) else skin['btn'])
+            elif size:
+                icon = pg.Rect(0, 0, *size)
+                icon.center = rect.center
+                pg.draw.rect(win, cafe.BROWN_D, icon, 1)
+            else:
+                pg.draw.rect(win, cafe.BROWN_D, rect.inflate(-12, -10), 2)
         ref['btns'] = btns
         tip = None
         if pg.mouse.get_focused():
             for key, rect in btns.items():
                 if not rect.collidepoint(mouse):
                     continue
-                if key == 'restore':
+                if key == 'settings':
+                    tip = ('설정', rect.centerx)
+                elif key == 'restore':
                     tip = ('미니모드', rect.centerx)
+                elif key == 'landscape':
+                    tip = ('가로모드', rect.centerx)
+                elif key == 'portrait':
+                    tip = ('세로모드', rect.centerx)
                 elif key == 'quit':
                     tip = ('종료', rect.centerx)
                 else:
@@ -539,6 +686,16 @@ def install_mini_bar(cafe):
                 if rect.collidepoint(event.pos):
                     if key == 'restore':
                         leave(game)
+                    elif key == 'settings':
+                        # same as the mini window's gear: back to the normal window with the dialog open
+                        leave(game)
+                        game.mini = False
+                        if ref.get('ui') is not None:
+                            ref['ui'].open_settings()
+                    elif key in ('landscape', 'portrait'):
+                        leave(game)
+                        game.portrait = key == 'portrait'
+                        game.mini = False
                     elif key == 'quit':
                         pg.event.post(pg.event.Event(pg.QUIT))   # same path as closing the window
                     else:
@@ -818,6 +975,9 @@ def install_merged_tabs(cafe):
             cafe.text(surface, f"판매대·가구 +{round((g.b_stand + g.b_furn) * 100)}%  ·  "
                       f"꾸미기 +{round(g.b_int * 100)}%", 12, (110, 76, 52), px + 12, py + 62, True)
         shown = [i for i in range(len(cafe.TABS)) if i != DECOR_TAB]
+        # display order: 의상 before 동료 (tab indices stay as-is; compiled code depends on them)
+        if cafe.TABS[4:6] == ['동료', '의상']:
+            shown[shown.index(4)], shown[shown.index(5)] = 5, 4
         bg = surface.get_at((px + 5, py + 28))
         surface.fill(bg, (px + 6, py + 8, pw - 12, 40))
         self.hit[:] = [h for h in self.hit if h[1] != 'tab']

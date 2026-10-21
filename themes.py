@@ -44,8 +44,8 @@ PREMIUM_PRICE, PREMIUM_BONUS = 2.2, 1.5
 
 FURN_SLOT = {'table': 'tableL', 'seat': 'tableR', 'decoration': 'plant2', 'corner': 'plant',
              'stand': 'stand_skin'}
-FURN_HINT = {'table': '손님이 앉아요', 'seat': '손님이 앉아요', 'decoration': '창가 장식',
-             'corner': '구석 장식', 'stand': '모든 판매대에 적용'}
+FURN_HINT = {'table': '', 'seat': '', 'decoration': '',
+             'corner': '', 'stand': ''}
 WALL_TINT = {  # wall palette helpers: stripe a/b, trim, wainscot, curtain
     'spring': ((247, 235, 206), (233, 174, 185), (113, 74, 52), (223, 201, 163), (247, 235, 206)),
     'summer': ((247, 235, 206), (145, 190, 208), (113, 74, 52), (227, 201, 155), (247, 235, 206)),
@@ -183,7 +183,7 @@ def install(cafe):
             desc = f'{label} 테마'
             if part in FURN_SLOT:
                 slot = FURN_SLOT[part]
-                item = dict(id=ident, name=name, desc=f'{desc} · {FURN_HINT[part]}', slot=slot, tier=1,
+                item = dict(id=ident, name=name, desc=f'{desc} · {FURN_HINT[part]}' if FURN_HINT[part] else desc, slot=slot, tier=1,
                             cost=cost(theme, part), bonus=bonus(theme, part), themed=True)
                 if part == 'table':
                     ref = base_item['tableL2']
@@ -390,6 +390,17 @@ def install(cafe):
                 on = owned_furn(g, item['slot']) is item
                 row.update(price='사용중' if on else '적용하기', state='equipped' if on else 'own',
                            ok=not on)
+        if 'plant' in slots and 'plant2' in slots:      # accessory list: split window / corner decorations
+            groups = (('plant2', '창가 장식'), ('plant', '구석 장식'))
+            own = rows[start:]
+            slot_of = lambda row: (cafe.FURN_BY_ID.get(row.get('id')) or {}).get('slot')
+            tail = [r for r in own if slot_of(r) not in ('plant2', 'plant')]
+            head = []
+            for slot, title in groups:
+                part = [r for r in own if slot_of(r) == slot]
+                if part:
+                    head += [dict(kind='hdr', name=title), *part]
+            rows[start:] = head + tail
         return None
 
     UI.furn_rows = furn_rows
@@ -467,8 +478,35 @@ def install(cafe):
         face.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
         return face
 
+    def bald_of(head, scale):
+        """Base head with its own brown hair removed, so themed hair never shows it underneath."""
+        if 'hair' not in face_masks:
+            base = art.image('player/base/short')
+            mask = pygame.Surface((24, 34), pygame.SRCALPHA)
+            mask.fill((255, 255, 255, 255))
+            fill = []
+            for y in range(0, 34):
+                for x in range(0, 24):
+                    c = base.get_at((x, y))
+                    if c.a and tuple(c)[:3] in hair_browns:
+                        mask.set_at((x, y), (0, 0, 0, 0))
+                        if 5 <= x <= 18 and 6 <= y <= 18:
+                            fill.append((x, y))
+            face_masks['hair'] = mask
+            face_masks['fill'] = fill
+        mask = face_masks['hair']
+        if scale > 1:
+            mask = pygame.transform.scale(mask, (24 * scale, 34 * scale))
+        bald = head.copy()
+        bald.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        # Patch the forehead with skin so no see-through holes remain under the themed hair.
+        skin = head.get_at((10 * scale, 16 * scale))
+        for x, y in face_masks['fill']:
+            bald.fill(skin, (x * scale, y * scale, scale, scale))
+        return bald
+
     def hero(hair, top, accessory, frame, facing):
-        hair_tag = hair[0] if str(hair[0]).startswith('T:') else None
+        hair_tag =hair[0] if str(hair[0]).startswith('T:') else None
         top_tag = top[0] if str(top[0]).startswith('T:') else None
         acc_tag = accessory if str(accessory).startswith('T:') else None
         if not (hair_tag or top_tag or acc_tag):
@@ -481,6 +519,9 @@ def install(cafe):
         def compose(scale):
             high = atlas('player/base/' + style, scale).copy()
             head = high.copy()
+            if hair_tag:
+                head = bald_of(head, scale)
+                high = head.copy()
             high.fill((0, 0, 0, 0), (5 * scale, 19 * scale, 14 * scale, 14 * scale))
             # Keep a skin bridge under the collar, including when mixing a themed
             # hairstyle with a legacy outfit. The collar and chin draw over it.

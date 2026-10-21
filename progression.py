@@ -25,6 +25,8 @@ STAFF_WORK_STEP = 30 * 60    # seconds of work per staff level, times current le
 FIRST_UNLOCK_DAY = 2         # 2nd recipe
 LAST_UNLOCK_DAY = 330        # final recipe; the rest of the year is for leveling / collection
 UNLOCK_CURVE = 1.1
+UNLOCK_KINDS = ('furn', 'sold', 'earn', 'guest')   # rotation by recipe index; index 1 (first bread) asks for 8 sales
+DAY_UNLOCK_INDEXES = (24, 34, 44)                  # "N일차 해금" is rare and only mid/late game
 
 
 def _span(minutes):
@@ -32,21 +34,22 @@ def _span(minutes):
 
 
 def unlock_condition(index):
-    """Fun/time condition for RECIPES[index]; the day is a guaranteed fallback."""
-    kind = index % 4
-    if kind == 1:
-        need = int(nice_number(5 * index ** 1.6))
-        if need >= 120:
-            need = int(nice_number(need / 60)) * 60       # whole hours
-        return dict(kind='play', need=need, text=f"게임 {_span(need)} 플레이")
-    if kind == 2:
-        need = int(nice_number(8 * index ** 1.4))
-        return dict(kind='sold', need=need, text=f"빵 {need}개 판매")
-    if kind == 3:
-        need = 2 + index // 6
-        return dict(kind='prev', need=need, text=f"직전 빵 Lv.{need} 달성")
-    need = int(nice_number(200 * index ** 2))
-    return dict(kind='earn', need=need, text=f"누적 수익 {need:,}G")
+    """One unlock condition per recipe (RECIPES[index]); the kind rotates so each bread asks for something different."""
+    if index in DAY_UNLOCK_INDEXES:
+        day = unlock_day(index)
+        return dict(kind='day', need=day, text=f"{day}일차 해금")
+    kind = UNLOCK_KINDS[index % len(UNLOCK_KINDS)]
+    if kind == 'earn':
+        need = int(nice_number(200 * index ** 2))
+        return dict(kind='earn', need=need, text=f"누적 수익 {need:,}G")
+    if kind == 'furn':
+        need = 1 + index // 6
+        return dict(kind='furn', need=need, text=f"가구 {need}개 구매")
+    if kind == 'guest':
+        need = 3 + round(index * 0.6)       # pool is ~72 kinds; rares/legends are slow, so cap at ~30
+        return dict(kind='guest', need=need, text=f"손님 {need}종 도감 수집")
+    need = int(nice_number(8 * index ** 1.4))
+    return dict(kind='sold', need=need, text=f"빵 {need}개 판매")
 
 
 def unlock_day(index, last_index=49):
@@ -148,6 +151,8 @@ def rebalance(cafe):
         stand['cost'] = remap(stand['cost'])
     for item in cafe.FURN:
         item['cost'] = remap(item['cost'], FURN_COST_MULT)
+        if item['id'] == 'tableL1':
+            item['desc'] = '2석'
     for group in cafe.INTERIOR.values():
         for item in group:
             item['cost'] = remap(item['cost'])
@@ -232,39 +237,38 @@ def install(cafe):
         original_init(self)
         self.recipe_sales = {rid: 0 for rid in cafe.RECIPE}
         self.staff_work = {sid: 0.0 for sid in cafe.STAFF_BY_ID}
-        self.auto_display_on = False
+        self.auto_display_on = True
         self._auto_sig = None
         self.start_time = cafe.time.time()
         self._unlock_check = 0.0
         self.play_time = 0.0
         self.sold = 0
 
+    def cond_value(self, kind):
+        if kind == 'day':
+            return self.day()
+        if kind == 'earn':
+            return int(self.total)
+        if kind == 'furn':       # bought pieces only; the free starter furniture doesn't count
+            return sum(1 for fid in self.furn if cafe.FURN_BY_ID.get(fid, {}).get('cost', 0) > 0)
+        if kind == 'guest':
+            return sum(1 for e in getattr(self, 'col', {}).get('guests', {}).values() if e.get('v', 0) > 0)
+        return self.sold
+
     def cond_met(self, index):
-        recipe = cafe.RECIPES[index]
-        if self.day() >= recipe['unlock_day']:
-            return True          # fallback so nobody is stuck
-        if self.rlv[cafe.RECIPES[index - 1]['id']] <= 0:
+        if index > 0 and self.rlv[cafe.RECIPES[index - 1]['id']] <= 0:
             return False         # unlock in order
-        cond = recipe['cond']
-        kind, need = cond['kind'], cond['need']
-        if kind == 'play':
-            return self.play_time >= need * 60
-        if kind == 'sold':
-            return self.sold >= need
-        if kind == 'prev':
-            return self.rlv[cafe.RECIPES[index - 1]['id']] >= need
-        return self.total >= need
+        cond = cafe.RECIPES[index]['cond']
+        return self.cond_value(cond['kind']) >= cond['need']
+
+    def cond_now(self, index):
+        kind = cafe.RECIPES[index]['cond']['kind']
+        unit = dict(day='일차', earn='G', furn='개', guest='종', sold='개')[kind]
+        return f"현재 {self.cond_value(kind):,}{unit}"
 
     def cond_progress(self, index):
-        cond = cafe.RECIPES[index]['cond']
-        kind, need = cond['kind'], cond['need']
-        if kind == 'play':
-            return f"플레이 {int(self.play_time // 60)}분 / {need}분"
-        if kind == 'sold':
-            return f"판매 {self.sold}개 / {need}개"
-        if kind == 'prev':
-            return f"직전 빵 Lv.{self.rlv[cafe.RECIPES[index - 1]['id']]} / Lv.{need}"
-        return f"누적 수익 {int(self.total):,}G / {need:,}G"
+        """Condition text with the player's current figure, e.g. '누적 수익 800G (현재 120G)'."""
+        return f"{cafe.RECIPES[index]['cond']['text']} ({self.cond_now(index)})"
 
     def price(self, recipe):
         level = max(1, self.rlv[recipe['id']])
@@ -275,7 +279,7 @@ def install(cafe):
 
     def buy_recipe(self, rid):
         # Recipes unlock by themselves on their cafe day; they can't be bought.
-        self.toast(f"{cafe.RECIPE[rid]['name']}: {cafe.RECIPE[rid]['cond']['text']}하면 해금돼요")
+        self.toast(f"{cafe.RECIPE[rid]['name']}: 해금 조건 · {cafe.RECIPE[rid]['cond']['text']}")
         return False
 
     def unlock_due(self):
@@ -438,7 +442,7 @@ def install(cafe):
         start = _nonnegative(data.get('start_time', 0))
         now = cafe.time.time()
         self.start_time = start if 0 < start <= now else now
-        self.auto_display_on = data.get('auto_display_on') is True
+        self.auto_display_on = data.get('auto_display_on', True) is True
         self.play_time = _nonnegative(data.get('play_time', 0))
         self.sold = int(_nonnegative(data.get('sold', 0)))
         self._auto_sig = None
@@ -473,8 +477,9 @@ def install(cafe):
                 elif not next_shown:
                     next_shown = True
                     result.append(dict(kind='recipe', id=rid, name=recipe['name'],
-                        sub=recipe['cond']['text'], sub2=f"혹은 {recipe['unlock_day']}일차 진행",
-                        price=g.cond_progress(index),
+                        sub=recipe['cond']['text'],
+                        sub2=g.cond_now(index),
+                        price='',
                         ok=False, state='locked', icon=cafe.icon_for('recipe', rid)))
                 elif not hidden_shown:
                     hidden_shown = True
@@ -487,7 +492,7 @@ def install(cafe):
             for sd in cafe.STAFF:
                 sid, level = sd['id'], g.staff_n[sd['id']]
                 if level == 0:
-                    price, state = '채용 ' + cafe.fmt(cafe.staff_cost(sd, 0)), 'buy'
+                    price, state = '영입 ' + cafe.fmt(cafe.staff_cost(sd, 0)), 'buy'
                     name = sd['name']
                     sub = sd['desc']
                 else:
@@ -523,6 +528,8 @@ def install(cafe):
     Game.tip = tip
     Game.buy_recipe = buy_recipe
     Game.day = day
+    Game.cond_value = cond_value
+    Game.cond_now = cond_now
     Game.cond_met = cond_met
     Game.cond_progress = cond_progress
     Game.price = price

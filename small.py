@@ -172,7 +172,7 @@ def install_recipe_book(cafe):
                     price = f"해금 완료 · Lv.{level}"
                 else:
                     sub = '???'
-                    price = f"{recipe['unlock_day']}일차 해금 (현재 {self.g.day()}일차)"
+                    price = self.g.cond_progress(cafe.RECIPES.index(recipe))
                 result.append(dict(kind='none', id=rid, name=recipe['name'],
                     sub=sub, price=price, ok=False,
                     state='owned' if level else 'locked',
@@ -224,8 +224,8 @@ def install_recipe_book(cafe):
         message = self.g.toasts[-1][0] if self.g.toasts else f'빵 도감 {got}/{len(cafe.RECIPES)} · 도감 탭에서 확인'
         cafe.text(surface, message, 13, (255, 226, 130), rect.x + 12, rect.y + 7, True)
         for i, (label, action) in enumerate((('설정', 'settings'),
-                ('가로' if cafe.PORTRAIT else '세로', 'orient'), ('미니(M)', 'mini'))):
-            button = cafe.pygame.Rect(rect.right - 306 + i * 100, rect.bottom - 30, 94, 24)
+                ('가로모드' if cafe.PORTRAIT else '세로모드', 'orient'), ('툴바모드', 'bar'), ('미니모드', 'mini'))):
+            button = cafe.pygame.Rect(rect.right - 324 + i * 80, rect.bottom - 30, 76, 24)
             self.btn(surface, label, button, action, mouse, False)
 
     def draw(self, surface, mouse):
@@ -395,7 +395,9 @@ def _talks(customer):
 
 
 def _queue(customer, situation):
-    customer.say_q = getattr(customer, 'say_q', []) + _pick(customer.name, situation)
+    lines = _pick(customer.name, situation)
+    customer.say_q = getattr(customer, 'say_q', []) + lines
+    return lines
 
 
 def install_rare_dialog(cafe):
@@ -416,7 +418,7 @@ def install_rare_dialog(cafe):
         first = not customer.paid
         result = paid(self, customer, *args, **kw)
         if first and _talks(customer):
-            _queue(customer, 'happy')
+            customer.happy_say = _queue(customer, 'happy')     # the toolbar bar shows this next to the sale
             _queue(customer, 'bye')
         return result
 

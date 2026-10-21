@@ -13,7 +13,7 @@ import tempfile
 import time
 import urllib.request
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 REPOSITORY = 'pdkstorywork/PixcelCafe'
 ASSET_NAME = 'PixelCafe.exe'
 MAX_DOWNLOAD = 512 * 1024 * 1024

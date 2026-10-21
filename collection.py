@@ -111,9 +111,9 @@ FAMILY_HINT = {     # guess shown while a named family guest is still undiscover
     '도야니': '도경의 동생인 것 같다',
     '셔니': '지현의 동생인 것 같다',
 }
-# which family each generic look (1-9) belongs to
+# which family each generic look (1-6) -- one fixed look per family name belongs to
 FAMILY_LOOKS = {1: '배지가족', 2: '지현가족', 3: '도경가족', 4: '진예가족', 5: '지영가족',
-                6: '미예언니가족', 7: '도경가족', 8: '배지가족', 9: '지현가족'}
+                6: '미예언니가족'}
 FAMILY_ASSETS = {
     '도경가족': 'family_dokyeong.png', '배지가족': 'family_baeji.png',
     '지현가족': 'family_jihyeon.png', '진예가족': 'family_jinye.png',
@@ -226,7 +226,11 @@ def install(cafe):
     specials.FAMILY_NAMES = tuple(dict.fromkeys((*specials.FAMILY_NAMES, *NAMED_FAMILY)))
     famnames = list(specials.FAMILY_NAMES)
     named_looks = {look: (name, filename) for name, (look, filename) in NAMED_FAMILY.items()}
-    famlooks = [*range(1, 10), *named_looks]
+    def _canon_look(name):      # each family name owns exactly one fixed look
+        if name in NAMED_FAMILY:
+            return NAMED_FAMILY[name][0]
+        return next((k for k, v in sorted(FAMILY_LOOKS.items()) if v == name), 1)
+    famlooks = [_canon_look(n) for n in famnames]
     save_path = os.path.join(cafe.SAVE_DIR, 'collection.json')
 
     # ---- art: file first, code-drawn placeholder second --------------------
@@ -407,9 +411,7 @@ def install(cafe):
 
     def fam_look(name):
         """Generic or named look used to draw a family name (e.g. 도경가족)."""
-        if name in NAMED_FAMILY:
-            return NAMED_FAMILY[name][0]
-        return next((k for k, v in FAMILY_LOOKS.items() if v == name), 1)
+        return _canon_look(name)
 
     def fam_label(key):
         return key[5:] if key.startswith('famn_') else OCC_NAME[key[4:]]
@@ -507,14 +509,9 @@ def install(cafe):
             for i in range(count):
                 c = Customer(self, plan if i == 0 else (self.make_plan() or list(plan)), 'family', name)
                 c.tier, c.occ = 'family', occ
+                c.appearance = _canon_look(name)      # name and look are fixed together
                 if name in NAMED_FAMILY:
-                    c.appearance = NAMED_FAMILY[name][0]
                     c.species = 'human'
-                else:
-                    looks = [k for k, v in FAMILY_LOOKS.items() if v == name]
-                    if looks:
-                        key = pick_guest(self, [f'fama_{look}' for look in looks], 'family_look')
-                        c.appearance = int(key[5:])
                 c.y += i * 6
                 self.customers.append(c)
             self.toast(f'{OCC_NAME[occ]}({name})이 왔어요! 빵 값의 {cafe.FAMILY_MULT}배를 내요')
@@ -618,12 +615,25 @@ def install(cafe):
                                 f'{vname} {cafe.RECIPE[rid]["name"]}! +{cafe.fmt(gain)}',
                                 0.0, VARIANT_COLOR[vid]])
             if first:
+                self.last_variant = (rid, vid, vname)      # the toolbar bar shows this variant's icon
                 flag(self, f'v:{vid}_{rid}')
                 self.toast(f'변종 발견! {vname} {cafe.RECIPE[rid]["name"]} (수익 +{VARIANT_BONUS * 100:.1f}%)')
         if extra:
             self.money += extra
             self.total += extra
+        self.last_sale = (customer, amount + extra)      # read by the toolbar bar's sale text
         visit(self, customer, amount + extra)
+
+    def guest_label(customer):
+        """Short display name of any guest, e.g. '토끼' / 'XX 손님' (family occasion)."""
+        tier = getattr(customer, 'tier', 'normal')
+        if tier == 'normal' or customer.kind == 'normal':
+            return SPECIES_NAME.get(customer.species, customer.species)
+        if tier == 'family':
+            return OCC_NAME.get(getattr(customer, 'occ', occasion()), '가족 손님')
+        return specials.SPECIAL.get(customer.name, str(customer.name))
+
+    cafe.guest_label = guest_label
 
     # ---- legendary tag over the head --------------------------------------
     original_label = Customer.draw_label
@@ -705,6 +715,21 @@ def install(cafe):
                                      ok=False, state='owned', icon=fit(image)))
         return rows
 
+    def staff_dex_rows(game):
+        """The six staff-type guests (제빵사 ~ 수석 셰프): discovered once hired."""
+        rows = []
+        for sd in cafe.STAFF:
+            sid = sd['id']
+            image = fit(cafe.icon_for('staff', sid))
+            if game.staff_n[sid] > 0:
+                rows.append(dict(kind='none', id='staff:' + sid, name=STAFF_GUEST.get(sid, sd['name']),
+                                 sub=f'Lv.{game.staff_n[sid]}/{sd["max"]}', price='일반 손님',
+                                 ok=False, state='owned', icon=image))
+            else:
+                rows.append(dict(kind='none', id='staff:' + sid, name='???', sub=STAFF_GUEST_DESC.get(sid, sd['desc']),
+                                 price='일반 손님 · 미발견', ok=False, state='locked', icon=fit(silhouette(image))))
+        return rows
+
     def simple_row(game, key, name, image, label, hint=''):
         e = game.col['guests'].get(key)
         if not e or e['v'] <= 0:
@@ -715,22 +740,26 @@ def install(cafe):
 
     def dex_rows(game, sub):
         if sub == 'normal':
-            return [*normal_rows(game), dict(kind='hdr', name='계절·기념일 손님'), *dex_rows(game, 'fam_occasion')]
+            return [*normal_rows(game), *staff_dex_rows(game),
+                    dict(kind='hdr', name='계절·기념일 손님'), *dex_rows(game, 'fam_occasion')]
         if sub in ('rare', 'legend'):
             ids = rare_ids if sub == 'rare' else legend_ids
             label = '희귀 손님' if sub == 'rare' else '전설 손님'
             return [guest_row(game, k, specials.SPECIAL[k], special_surf(k, 0, 1),
                               '', label, sub) for k in ids]
-        if sub == 'family':          # family names and looks share one tab
-            return [dict(kind='hdr', name='가족 이름'), *dex_rows(game, 'famname'),
-                    dict(kind='hdr', name='가족 외형'), *dex_rows(game, 'famlook')]
+        if sub == 'family':          # one list: each family name followed by its own looks
+            rows = []
+            for i, n in enumerate(famnames):
+                rows.append(simple_row(game, 'famn_' + n, n,
+                                       family_composite(_canon_look(n), 0, 1, occasion()), '가족 손님',
+                                       FAMILY_HINT.get(n, '')))
+            return rows
         if sub == 'famname':
             return [simple_row(game, 'famn_' + n, n,
-                               family_composite(NAMED_FAMILY[n][0] if n in NAMED_FAMILY else 1 + i,
-                                                0, 1, occasion()), '가족 손님', FAMILY_HINT.get(n, ''))
+                               family_composite(_canon_look(n), 0, 1, occasion()), '가족 손님', FAMILY_HINT.get(n, ''))
                     for i, n in enumerate(famnames)]
         if sub == 'famlook':
-            return [simple_row(game, f'fama_{i}', named_looks[i][0] if i in named_looks else f'가족 외형 {i}',
+            return [simple_row(game, f'fama_{i}', (named_looks[i][0] if i in named_looks else FAMILY_LOOKS.get(i, f'가족 외형 {i}')) + ' 외형',
                                family_composite(i, 0, 1, occasion()), '가족 손님',
                                FAMILY_HINT.get(named_looks[i][0] if i in named_looks else FAMILY_LOOKS.get(i), ''))
                     for i in famlooks]
@@ -757,6 +786,9 @@ def install(cafe):
 
     STAFF_GUEST = {'apprentice': '제빵사 손님', 'clerk': '회사원 손님', 'barista': '바리스타 손님', 'rider': '배민 손님',
                    'patissier': '파티시에 손님', 'chef': '수석 셰프 손님'}
+    STAFF_GUEST_DESC = {'apprentice': '빵 반죽 모양에 관심이 많아요', 'clerk': '계산대 앞에서 늘 방긋 웃어요',
+                        'barista': '커피 향에 이끌려 찾아와요', 'patissier': '케이크 장식을 꼼꼼히 구경해요',
+                        'rider': '바쁜 걸음으로 쌩 들러 가요', 'chef': '빵 맛을 깐깐하게 평가해요'}
 
     def staff_rows(game):
         """The old staff hires, now listed first among the normal guests (hire id 'staff:<sid>')."""
@@ -768,7 +800,8 @@ def install(cafe):
             if level == 0:
                 cost = cafe.staff_cost(sd, 0)
                 rows.append(dict(kind='mate', id='staff:' + sid, name=name, icon=icon, state='buy',
-                                 ok=game.money >= cost, price=f'영입 {cafe.fmt(cost)}', sub=sd['desc']))
+                                 ok=game.money >= cost, price=f'영입 {cafe.fmt(cost)}',
+                                 sub=f'수익 +{int(sd["bonus"] * 100)}% · ' + STAFF_GUEST_DESC.get(sid, sd['desc'])))
                 continue
             work = (f'근무 {_hours(game.staff_work[sid])}/{_hours(staff_target(level))}'
                     if level < sd['max'] else '최대 성장')
@@ -789,7 +822,7 @@ def install(cafe):
         else:
             items = [(k, specials.SPECIAL[k], special_surf(k, 0, 1)) for k in (rare_ids if tier == 'rare' else legend_ids)]
         cost = mate_cost(game, tier)
-        rows = staff_rows(game) if tier == 'normal' else []
+        rows = []
         for key, name, image in items:
             if key in game.col['mates']:
                 lv = mate_lv(game.col, key)
@@ -802,13 +835,15 @@ def install(cafe):
                                      ('눌러서 쉬게 하기' if is_rep else '눌러서 대표로 세우기')))
             elif not seen(game, key):
                 rows.append(dict(kind='mate', id=key, name='???', state='locked', ok=False,
-                                 icon=fit(silhouette(image)), price=MATE_TIER_NAME[tier] + ' · 미발견',
-                                 sub='가게 방문 후 동료 해금'))
+                                 icon=fit(silhouette(image)), price='',
+                                 sub=f'수익 +{bonus_each * 100:g}% · 가게 방문 후 동료 해금'))
             else:
                 why = mate_block(game, key, tier)
                 rows.append(dict(kind='mate', id=key, name=name, icon=fit(image), ok=not why and game.money >= cost,
                                  state='locked' if why else 'buy', price=f'영입 {cafe.fmt(cost)}',
                                  sub=why or f'수익 +{bonus_each * 100:g}%'))
+        if tier == 'normal':        # the pricey staff hires sit below the ordinary guests
+            rows += staff_rows(game)
         return rows
 
     def mate_name(key):
@@ -939,27 +974,38 @@ def install(cafe):
     def ach_rows(game, sub):
         done_ids = set(game.col['ach'])
         names = {d[0]: d[1] for d in ach_defs()}
+        prog = {d[0]: (d[2], d[3]) for d in ach_defs()}
         rows = []
         if sub == 'ach_list':
             for aid, name, have, total in ach_defs():
                 done = aid in done_ids
                 pct_, mult = reward_of(aid)
                 skin = next((k for k in SKINS if k['ach'] == aid), None)
-                reward = f'수익 +{pct_ * 100:g}% · 골드' + (f' · {skin["name"]}' if skin else '')
+                reward = f'수익 +{pct_ * 100:g}% · 골드'
+                icon = trophy_icon(done)
+                if skin:
+                    reward = f'툴바 디자인 [{skin["name"]}] ' + ('획득' if done else '해금') + f' · 수익 +{pct_ * 100:g}%'
+                    chip = skin_icon(skin)
+                    if not done:
+                        chip.set_alpha(150)
+                    chip = pygame.transform.smoothscale(chip, (28, 18))
+                    icon.blit(chip, (18, 28))
                 rows.append(dict(kind='none', id=aid, name=('★ ' if done else '') + name,
                                  sub='달성 완료' if done else f'진행 {min(have(game), total)}/{total}',
                                  price=reward, ok=False, state='owned' if done else 'locked',
-                                 icon=trophy_icon(done)))
+                                 icon=icon))
             return rows
         for skin in SKINS:
             if skin_ok(game, skin):
                 using = real_skin(game)['id'] == skin['id']
                 rows.append(dict(kind='skin', id=skin['id'], name=skin['name'],
-                                 sub='사용 중' if using else '눌러서 미리보기', price='툴바',
+                                 sub='사용 중' if using else '눌러서 미리보기',
+                                 price='기본 제공' if skin['ach'] is None else f'달성: {names[skin["ach"]]}',
                                  ok=False, state='owned', icon=skin_icon(skin)))
             else:
                 rows.append(dict(kind='none', id=skin['id'], name=skin['name'],
-                                 sub=f'업적 "{names[skin["ach"]]}" 달성 시 해금', price='잠김',
+                                 sub=f'업적 "{names[skin["ach"]]}" 달성 시 해금',
+                                 price=f'진행 {min(prog[skin["ach"]][0](game), prog[skin["ach"]][1])}/{prog[skin["ach"]][1]}',
                                  ok=False, state='locked', icon=skin_icon(skin)))
         return rows
 
@@ -1164,7 +1210,10 @@ def install(cafe):
     def draw_row(self, ui, rect, r, mouse, area):
         result = original_draw_row(self, ui, rect, r, mouse, area)
         if r.get('sub2'):       # condition continues on a second line instead of being cut off
-            cafe.text(ui, r['sub2'], 12, (130, 100, 76), rect.x + 66, rect.y + 41)
+            size = 12       # stay left of the buy button in the bottom-right corner
+            while size > 9 and cafe.font(size).size(r['sub2'])[0] > rect.w - 66 - 96:
+                size -= 1
+            cafe.text(ui, r['sub2'], size, (130, 100, 76), rect.x + 66, rect.y + 41)
         if r.get('kind') == 'skin':
             self._skin_hits.append((rect.clip(area), r['id']))
         elif r.get('kind') == 'none' and r.get('state') == 'locked' and r.get('id') in SKIN_BY_ID:
@@ -1174,7 +1223,7 @@ def install(cafe):
             if r['state'] == 'buy':
                 self._mate_info[r['id']] = (r['name'], r.get('icon'))
                 # the green hire box drawn by the base row: bottom-right, sized by its label
-                width = min(rect.w - 76, max(110, cafe.font(13, True).size('구매 ' + r['price'])[0] + 20))
+                width = min(rect.w - 76, max(110, cafe.font(13, True).size(r['price'])[0] + 20))
                 box = pygame.Rect(rect.right - width - 8, rect.bottom - 26, width, 22)
                 self._mate_btn[r['id']] = box.inflate(8, 6).clip(area)
         if r.get('id') in SKIN_BY_ID and r.get('kind') in ('skin', 'none'):
@@ -1313,6 +1362,8 @@ def install(cafe):
         buttons(py + 88, 24, SUBTABS[cat], sub, 'sub')
 
     def click(self, pos, game, scene_clicks):
+        if self.settings_open:          # the dialog covers the cards; their stale hit boxes must not eat its clicks
+            return original_click(self, pos, game, scene_clicks)
         if self.tab == 1:
             for rect, kind, sid in getattr(self, '_dex_hits', ()):
                 if kind == 'rsub' and rect.collidepoint(pos):

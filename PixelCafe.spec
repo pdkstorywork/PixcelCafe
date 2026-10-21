@@ -5,6 +5,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[('PixelCafe.pyc', '.'),
+           ('assets/PixelCafe.ico', 'assets'),
            ('assets/decor-icons.png', 'assets'),
            ('assets/decor-icons.json', 'assets'),
            ('assets/manifest.json', 'assets'),
@@ -27,4 +28,4 @@ exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name='PixelCafe',
           upx=True, upx_exclude=[], runtime_tmpdir=None, console=False,
           disable_windowed_traceback=False, argv_emulation=False,
           target_arch=None, codesign_identity=None, entitlements_file=None,
-          icon=['PixelCafe.exe'])
+          icon=['assets/PixelCafe.ico'])

@@ -1,15 +1,15 @@
 # PixelCafe 배포 및 업데이트
 
-현재 버전은 `game_updater.py`의 `VERSION = '1.0.1'`입니다.
+현재 버전은 `game_updater.py`의 `VERSION = '1.0.2'`입니다.
 업데이트 저장소는 `pdkstorywork/PixcelCafe`입니다. 주소를 바꾸면
 `REPOSITORY`를 수정한 뒤 다시 빌드해야 합니다.
 
 ## 처음 배포
 
 1. Python 3.13 및 PyInstaller/pygame이 설치된 환경에서 프로젝트 폴더로 이동합니다.
-2. `python -m PyInstaller --noconfirm --clean PixelCafe.spec`으로 빌드합니다.
-3. GitHub 공개 저장소의 Releases에서 `v1.0.1` 태그로 정식 릴리스를 만듭니다.
-4. **`dist/PixelCafe.exe`를 `PixelCafe.exe`라는 이름으로 첨부**하고 게시합니다.
+2. `python -m PyInstaller --noconfirm --clean --distpath . PixelCafe.spec`으로 빌드합니다.
+3. GitHub 공개 저장소의 Releases에서 `v1.0.2` 태그로 정식 릴리스를 만듭니다.
+4. **루트의 `PixelCafe.exe`를 첨부**하고 게시합니다.
    소스 ZIP만 게시하면 자동 업데이트할 수 없습니다.
 
 사용자는 Releases에서 EXE를 내려받아 쓰기 가능한 폴더에 저장한 뒤 실행합니다.
