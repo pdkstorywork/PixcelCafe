@@ -9,6 +9,7 @@ placeholders automatically:
 Set PIXELCAFE_DATE=YYYY-MM-DD to preview a seasonal/anniversary occasion.
 """
 import datetime
+import copy
 import os
 import random
 from pathlib import Path
@@ -1220,11 +1221,17 @@ def install(cafe):
 
     def draw_row(self, ui, rect, r, mouse, area):
         # Undiscovered companions have no purchase action or generic "구매" button.
-        base_row = dict(r, kind='none') if r.get('kind') == 'mate' and r.get('state') == 'locked' else r
+        # Recipes unlock automatically; leave the full bottom line for progress.
+        locked_recipe = r.get('kind') == 'recipe' and r.get('state') == 'locked'
+        no_purchase = locked_recipe or (r.get('kind') == 'mate' and r.get('state') == 'locked')
+        base_row = dict(r, kind='none') if no_purchase else r
         result = original_draw_row(self, ui, rect, base_row, mouse, area)
+        if locked_recipe:
+            self.hit.append((rect.clip(area), 'preview_item', ('recipe', r['id'])))
         if r.get('sub2'):       # condition continues on a second line instead of being cut off
             size = 12       # stay left of the buy button in the bottom-right corner
-            while size > 9 and cafe.font(size).size(r['sub2'])[0] > rect.w - 66 - 96:
+            available = rect.w - 76 if no_purchase else rect.w - 66 - 96
+            while size > 9 and cafe.font(size).size(r['sub2'])[0] > available:
                 size -= 1
             cafe.text(ui, r['sub2'], size, (130, 100, 76), rect.x + 66, rect.y + 41)
         if r.get('kind') == 'skin':
@@ -1417,6 +1424,27 @@ def install(cafe):
             if crew_mate(self) and not on_tab_strip:
                 return                  # companion rows are not staff hires
         return original_click(self, pos, game, scene_clicks)
+
+    original_preview_game = UI.preview_game
+
+    def preview_game(self):
+        view = original_preview_game(self)
+        pv = getattr(self, 'preview', None)
+        if self.tab != staff_tab or self.g.mini or not pv or pv[0] != 'mate':
+            self._mate_preview = None
+            return view
+        # Preview through the scene's staff layer without hiring or changing the representative.
+        if view is self.g:
+            view = copy.copy(view)
+        view.staff = []
+        mate = getattr(self, '_mate_preview', None)
+        if mate is None or mate.mate_key != pv[1]:
+            mate = self._mate_preview = Mate(pv[1], view)
+        mate.game = view
+        view.staff = [mate]
+        return view
+
+    UI.preview_game = preview_game
 
     original_update = Game.update
 

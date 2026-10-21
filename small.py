@@ -31,6 +31,172 @@ def install_customer_facing(cafe):
     cafe.Customer.draw = draw
 
 
+MEAL_CYCLE = 1.9
+MEAL_REPEATS = 4
+
+
+def _meal_profile(customer):
+    # Source head height, torso height, and mouth row, in logical sprite pixels.
+    if customer.kind == 'family':
+        return 19, 7, 15
+    if customer.kind == 'normal':
+        return {'rabbit': (19, 5, 17), 'dog': (17, 5, 15)}.get(
+            customer.species, (16, 6, 14))
+    return {'usagi': (20, 4, 18), 'cinna': (16, 6, 13),
+            'pikachu': (19, 5, 17), 'pororo': (19, 5, 17),
+            'totoro': (18, 5, 12), 'kaonashi': (18, 6, 10),
+            'gudetama': (0, 0, 0)}.get(customer.name, (18, 5, 15))
+
+
+def _meal_motion(customer):
+    elapsed = max(0.0, getattr(customer, '_meal_duration', customer.timer) - customer.timer)
+    active = elapsed < MEAL_CYCLE * MEAL_REPEATS
+    phase = elapsed % MEAL_CYCLE / MEAL_CYCLE if active else 0
+    lift = (phase / .22 if phase < .22 else 1.0 if phase < .69
+            else max(0.0, 1 - (phase - .69) / .20))
+    chewing = active and .28 <= phase < .66
+    return lift * lift * (3 - 2 * lift), int((phase - .28) * 20) % 2 if chewing else 0, chewing, active
+
+
+def _meal_arm(x, mouth_y, facing, lift, bob=0, compact=True):
+    """Fixed 3px upper arm and 2.5px forearm; rotate without stretching."""
+    shoulder = (x + facing, mouth_y + 4 + bob)
+    upper = math.radians(-5 - 15 * lift if compact else 25 - 45 * lift)
+    lower = math.radians(-85 - 15 * lift if compact else -60 - 40 * lift)
+    elbow = (shoulder[0] + facing * 3 * math.cos(upper), shoulder[1] + 3 * math.sin(upper))
+    wrist = (elbow[0] + facing * 2.5 * math.cos(lower), elbow[1] + 2.5 * math.sin(lower))
+    return shoulder, elbow, wrist
+
+
+@lru_cache(maxsize=512)
+def _seated_guest(source, head, body, facing, bob):
+    w, h = source.get_size()
+    # A flat guest (gudetama) rests on the cushion without invented legs.
+    flat = not head
+    bbox = source.get_bounding_rect()
+    hip = bbox.bottom if flat else head + body
+    size = (w + 6, max(h + 8, hip + 8))
+
+    def build(density):
+        original = source if density == 1 else dr.detail(source, density)
+        out = pygame.Surface((size[0] * density, size[1] * density), pygame.SRCALPHA)
+
+        def part(rect, pos, target=None):
+            rect = pygame.Rect(*(round(n * density) for n in rect))
+            image = original.subsurface(rect)
+            if target:
+                image = pygame.transform.scale(image, tuple(round(n * density) for n in target))
+            out.blit(image, tuple(round(n * density) for n in pos))
+
+        if flat:
+            part((0, 0, w, h), (3, bob))
+        else:
+            part((0, 0, w, head), (3, bob))
+            torso_w = 10 if h >= 30 else 8
+            middle = (w - torso_w) // 2
+            part((middle, head, torso_w, body), (3 + middle, head + bob), (torso_w, body - bob))
+            # Fold the lap forward and keep calves/feet anchored to the cushion.
+            part((middle, head + body - 2, torso_w, 2),
+                 (3 + middle, hip), (torso_w + 2, 3))
+            for offset in (-3, 1):
+                knee_x = 3 + w // 2 + offset
+                part((middle, h - 3, 3, 2), (knee_x, hip + 2), (3, 3))
+                part((middle, h - 2, 4, 2), (knee_x + facing, hip + 5), (5, 2))
+        return out
+
+    return dr.register(build(1), build), hip
+
+
+def install_customer_eating(cafe):
+    if getattr(cafe, '_customer_eating_installed', False):
+        return
+    cafe._customer_eating_installed = True
+    Customer = cafe.Customer
+    original_arrive, original_draw, original_meal = Customer._arrive, Customer.draw, Customer.draw_meal
+
+    def seated(customer):
+        return customer.state == 'eat' and customer.seat is not None and not customer.route
+
+    def source(customer):
+        facing = -customer.facing  # Match the walking artwork's corrected direction.
+        if customer.kind == 'family':
+            return cafe.specials.family_surf(customer.appearance, 0, facing)
+        if customer.kind == 'rare':
+            return cafe.specials.special_surf(customer.name, 0, facing)
+        outfit = ('tee', 'stripe')[(customer.var + len(customer.species)) % 2]
+        return cafe.chars.animal_surf(customer.species, customer.var, outfit,
+                                      customer.shirt, customer.acc, 0, facing)
+
+    def location(customer):
+        # Sofa seats face the room; table chairs sit just outside the table edge.
+        table = customer.seat[0][0].startswith('tableL') or customer.seat[0][0].endswith('_table')
+        return customer.sx - (2 * customer.facing if table else 0), customer.sy - 5
+
+    @lru_cache(maxsize=128)
+    def paw_color(image, mouth):
+        w, h = image.get_size()
+        colors = {}
+        for y in range(max(0, mouth - 1), min(h, mouth + 3)):
+            for x in range(w // 2 - 3, w // 2 + 4):
+                r, g, b, a = image.get_at((x, y))
+                if a and r + g + b > 380:
+                    colors[(r, g, b)] = colors.get((r, g, b), 0) + 1
+        return max(colors, key=colors.get) if colors else (242, 221, 186)
+
+    def arrive(self, game):
+        result = original_arrive(self, game)
+        if seated(self):
+            self._meal_duration = self.timer
+        return result
+
+    def draw(self, surface, t):
+        if not seated(self):
+            return original_draw(self, surface, t)
+        head, body, _ = _meal_profile(self)
+        _, bob, _, _ = _meal_motion(self)
+        image, hip = _seated_guest(source(self), head, body, self.facing, bob)
+        x, y = location(self)
+        cafe._shadow(surface, self.sx - 7, self.sy - 3, 14, 5, 60)
+        surface.blit(image, (x - image.get_width() // 2, y - hip))
+        if self.kind == 'rare':
+            sparkle = pygame.time.get_ticks() // 220 % 3
+            for index, (dx, dy) in enumerate(((-11, -22), (11, -16), (-9, -8))):
+                if (index + sparkle) % 3 == 0:
+                    cafe.R(surface, (255, 244, 150), self.sx + dx, self.sy + dy - 1, 1, 3)
+                    cafe.R(surface, (255, 244, 150), self.sx + dx - 1, self.sy + dy, 3, 1)
+
+    def draw_meal(self, surface):
+        if not seated(self) or not self.cart:
+            return original_meal(self, surface)
+        lift, bob, chewing, active = _meal_motion(self)
+        if not active:
+            return original_meal(self, surface)
+        head, body, mouth = _meal_profile(self)
+        original = source(self)
+        x, y = location(self)
+        if head:
+            mouth_y = y - head - body + mouth
+        else:
+            mouth_y = y - original.get_bounding_rect().height // 2
+        compact = self.kind != 'normal' or self.species != 'cat'
+        shoulder, elbow, wrist = _meal_arm(x, mouth_y, self.facing, lift, bob, compact)
+        color = paw_color(original, mouth if head else original.get_bounding_rect().centery)
+        for a, b in ((shoulder, elbow), (elbow, wrist)):
+            # Logical pixel segments remain short at every render density.
+            for i in range(7):
+                u = i / 6
+                px, py = round(a[0] + (b[0] - a[0]) * u), round(a[1] + (b[1] - a[1]) * u)
+                cafe.R(surface, (104, 69, 49), px, py, 3, 3)
+                cafe.R(surface, color, px + 1, py, 2, 2)
+        food = cafe.art.placed_food(cafe.RECIPE[self.cart[0]]['spr'], 8, 6)
+        surface.blit(food, (round(wrist[0] - food.get_width() // 2 + self.facing * 2),
+                            round(wrist[1] - 1)))
+        if chewing and not bob:
+            cafe.R(surface, (217, 170, 118), round(wrist[0] + self.facing * 5), round(wrist[1] + 6), 1, 1)
+
+    Customer._arrive, Customer.draw, Customer.draw_meal = arrive, draw, draw_meal
+
+
 @lru_cache(maxsize=1)
 def sheet():
     return pygame.image.load(str(ROOT / 'assets' / 'window-seasons.png')).convert()

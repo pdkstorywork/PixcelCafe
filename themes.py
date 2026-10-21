@@ -1,15 +1,17 @@
-"""Seasonal theme packs: 70 pieces from assets/themes wired into the game.
+"""Seasonal theme packs: 75 pieces from assets/themes wired into the game.
 
 Per theme (spring / summer / autumn / winter / golden):
   furniture  table -> table slot (2~4 seats like tableL2), seat -> tableR2 spot,
              decoration -> big plant spot, corner -> small plant spot,
              stand -> "display skin" that restyles every stand
+             doormat -> fixed entrance floor textile (walkable)
   interior   wall, floor, sign, light  (wall/floor/sign/light shop categories)
   character  hair, outfit_1/2 (tops), accessory_1/2 (acc)
 
 Furniture can be owned several at once per slot; the one you bought last (or
 re-applied from the shop row) is shown. Prices/bonuses are the PRICE / BONUS
 tables below. Art loads from assets/themes/<theme>/native/<part>.png.
+Three nonseasonal doormats have a separate catalog and classic/native assets.
 """
 import os
 import sys
@@ -32,20 +34,31 @@ NAMES = {
     'golden': ('샹들리에 테이블', '벨벳 소파', '금장 카운터 장식', '케이크 타워', '골든 베이커리 매대', '대리석 벽',
                '금빛 바닥', '금박 간판', '샹들리에 조명', '은발 웨이브 헤어', '연미복 셰프복', '금장 앞치마', '모노클', '셰프 모자'),
 }
+DOORMAT_NAMES = dict(spring='벚꽃 발매트', summer='조개 발매트', autumn='낙엽 발매트',
+                    winter='눈꽃 발매트', golden='금장 밀이삭 발매트')
+DOORMAT_SIZE, DOORMAT_POS = (36, 14), (142, 186)
+DEFAULT_DOORMAT = 'doormat_default'
+# Explicit stable IDs and final gold prices; these are not seasonal theme parts.
+EXTRA_DOORMATS = (
+    ('check', '체크무늬 발매트', 40000, '따뜻한 크림·카라멜 체크'),
+    ('cat', '고양이 발매트', 225000, '고양이 얼굴과 발자국'),
+    ('welcome', 'WELCOME 발매트', 185000, '반가운 인사를 담은 카페 매트'),
+)
 PARTS = ('table', 'seat', 'decoration', 'corner', 'stand', 'wall', 'floor', 'sign', 'light',
-         'hair', 'outfit_1', 'outfit_2', 'accessory_1', 'accessory_2')
+         'hair', 'outfit_1', 'outfit_2', 'accessory_1', 'accessory_2', 'doormat')
 # Match the base shop economy; golden pieces cost x2.2 and grant x1.5 bonus.
 PRICE = dict(table=2400, seat=3800, decoration=2100, corner=1300, stand=3000,
              wall=2200, floor=2200, sign=4500, light=2500, hair=3300,
-             outfit_1=3000, outfit_2=3600, accessory_1=2400, accessory_2=3000)
+             outfit_1=3000, outfit_2=3600, accessory_1=2400, accessory_2=3000, doormat=1300)
 BONUS = dict(table=.02, seat=.01, decoration=.01, corner=.01, stand=.01, wall=.01, floor=.01,
-             sign=.01, light=.01, hair=.01, outfit_1=.01, outfit_2=.01, accessory_1=.01, accessory_2=.01)
+             sign=.01, light=.01, hair=.01, outfit_1=.01, outfit_2=.01, accessory_1=.01, accessory_2=.01,
+             doormat=.01)
 PREMIUM_PRICE, PREMIUM_BONUS = 2.2, 1.5
 
 FURN_SLOT = {'table': 'tableL', 'seat': 'tableR', 'decoration': 'plant2', 'corner': 'plant',
-             'stand': 'stand_skin'}
+             'stand': 'stand_skin', 'doormat': 'doormat'}
 FURN_HINT = {'table': '', 'seat': '', 'decoration': '',
-             'corner': '', 'stand': ''}
+             'corner': '', 'stand': '', 'doormat': '입구 앞 고정 장식'}
 WALL_TINT = {  # wall palette helpers: stripe a/b, trim, wainscot, curtain
     'spring': ((247, 235, 206), (233, 174, 185), (113, 74, 52), (223, 201, 163), (247, 235, 206)),
     'summer': ((247, 235, 206), (145, 190, 208), (113, 74, 52), (227, 201, 155), (247, 235, 206)),
@@ -58,7 +71,7 @@ SIGN_TEXT = {  # (centre x, centre y, colour) of the plaque; None = no plaque to
     'winter': None, 'golden': (32, 12, (215, 179, 106)),
 }
 SIZE = {'table': (52, 32), 'seat': (50, 24), 'decoration': (24, 42), 'corner': (32, 32),
-        'stand': (64, 36)}
+        'stand': (64, 36), 'doormat': DOORMAT_SIZE}
 CENTRE = ('hair', 'outfit_1', 'outfit_2', 'accessory_1', 'accessory_2')   # parts drawn on the 24x34 body canvas
 ON_FACE = {('summer', 'accessory_2'), ('golden', 'accessory_1')}   # glasses sit over the eyes
 LIGHT_X = (98, 150, 205)    # hanging fixtures: x centres, drawn on the wall band
@@ -74,13 +87,37 @@ def _asset_dirs():
     return dirs
 
 
+def stand_food_layout(st, theme=None):
+    """Food centres, shelf baselines and size limits in logical scene pixels."""
+    count = st['slots']
+    if theme:
+        rows = ((25 if theme == 'autumn' else 23),) if count <= 4 else (
+            (19, 25) if theme == 'autumn' else (17, 23))
+        left, right = 11, 53
+        height = 8 if len(rows) == 1 else 6
+    else:
+        rows, height = {'stand1': ((12, 23), 8), 'stand3': ((18, 25), 6),
+                        'stand4': ((13, 25), 9), 'stand6': ((16, 24), 6)}[st['id']]
+        left, right = 6, 58
+    columns = (count + len(rows) - 1) // len(rows)
+    spacing = (right - left) / columns
+    width = min(12, int(spacing) - 2)
+    result = []
+    for row, baseline in enumerate(rows):
+        used = min(columns, count - row * columns)
+        for col in range(used):
+            cx = round(st['x'] + (left + right) / 2 + (col - (used - 1) / 2) * spacing)
+            result.append((cx, st['y'] + baseline, width, height))
+    return result
+
+
 def install(cafe):
     if getattr(cafe, '_themes_installed', False):
         return
     cafe._themes_installed = True
     pygame, art, dr = cafe.pygame, cafe.art, cafe.art.dr
     Game, UI = cafe.Game, cafe.UI
-    state = {'game': None}
+    state = {}
     save_path = os.path.join(cafe.SAVE_DIR, 'themes.json')
 
     # ---- art ---------------------------------------------------------------
@@ -95,6 +132,8 @@ def install(cafe):
                 if path.is_file():
                     try:
                         raw[key] = pygame.image.load(str(path)).convert_alpha()
+                        if (part == 'doormat' or theme == 'classic') and raw[key].get_size() != DOORMAT_SIZE:
+                            raise ValueError(f'{path}: expected {DOORMAT_SIZE}, got {raw[key].get_size()}')
                     except pygame.error:
                         pass
                     break
@@ -175,7 +214,7 @@ def install(cafe):
         names = NAMES[theme]
         label = THEME_NAME[theme]
         for pi, part in enumerate(PARTS):
-            name = names[pi]
+            name = DOORMAT_NAMES[theme] if part == 'doormat' else names[pi]
             if not present(theme, part):
                 continue
             ident = f'{theme}_{part}'
@@ -199,11 +238,17 @@ def install(cafe):
                 elif part == 'corner':
                     item['by'] = base_item['plant1']['by']
                     pos = (6, 170)
+                elif part == 'doormat':
+                    item['by'] = DOORMAT_POS[1]
+                    pos = DOORMAT_POS
                 else:                                   # stand skin: preview over the first stand
                     item['by'] = 120
                     pos = (60, 90)
                 w, h = SIZE[part]
                 item['rect'] = (pos[0], pos[1], w, h)
+                if part == 'doormat':
+                    # Floor textiles must not block the companion's walking area.
+                    item['rect'] = (pos[0], pos[1], 0, 0)
                 item['draw'] = furn_drawer(theme, part, pos)
                 new_furn.append(item)
             elif part in new_int:
@@ -235,6 +280,16 @@ def install(cafe):
                     value = tag
                 new_hero[cat].append(dict(id=hid, name=name, desc=desc, cost=cost(theme, part),
                                           bonus=bonus(theme, part), v=value, themed=True))
+    for key, name, price, desc in EXTRA_DOORMATS:
+        if not present('classic', key):
+            continue
+        ident = f'{key}_doormat'
+        themed[ident] = dict(theme='classic', part='doormat', asset=key)
+        new_furn.append(dict(id=ident, name=name, desc=f'{desc} · 입구 앞 고정 장식',
+                             slot='doormat', tier=1, cost=price, bonus=.01, themed=True,
+                             by=DOORMAT_POS[1], rect=(*DOORMAT_POS, 0, 0),
+                             draw=furn_drawer('classic', key, DOORMAT_POS)))
+
     def make_light(theme):
         def draw(s, t):
             img = sprite(theme, 'light')
@@ -319,15 +374,16 @@ def install(cafe):
     def init(self):
         blank(self)
         original_init(self)
-        state['game'] = self
 
     def owned_furn(self, slot):
+        eq = getattr(self, 'theme_eq', {}).get(slot)
+        if slot == 'doormat' and eq in (None, DEFAULT_DOORMAT):
+            return None
         have = [f for f in by_slot.get(slot, ()) if f['id'] in self.furn]
         if not have:
             return None
         if len(have) == 1:
             return have[0]
-        eq = getattr(self, 'theme_eq', {}).get(slot)
         for f in have:
             if f['id'] == eq:
                 return f
@@ -335,6 +391,12 @@ def install(cafe):
         return max(plain, key=lambda f: f['tier'])
 
     def buy_furn(self, fid):
+        if fid == DEFAULT_DOORMAT:
+            if self.theme_eq.get('doormat') in (None, DEFAULT_DOORMAT):
+                return False
+            self.theme_eq['doormat'] = DEFAULT_DOORMAT
+            self.toast('기본 발매트 적용!')
+            return True
         item = cafe.FURN_BY_ID[fid]
         if not item.get('themed'):
             return original_buy(self, fid)
@@ -368,6 +430,9 @@ def install(cafe):
             for slot, fid in data.get('furn_eq', {}).items():
                 if not isinstance(fid, str):
                     continue
+                if slot == 'doormat' and fid == DEFAULT_DOORMAT:
+                    self.theme_eq[slot] = fid
+                    continue
                 item = cafe.FURN_BY_ID.get(fid)
                 if item and item.get('themed') and item['slot'] == slot and fid in self.furn:
                     self.theme_eq[slot] = fid
@@ -390,6 +455,8 @@ def install(cafe):
                 on = owned_furn(g, item['slot']) is item
                 row.update(price='사용중' if on else '적용하기', state='equipped' if on else 'own',
                            ok=not on)
+        if slots == {'doormat'}:
+            rows[start:] = sorted(rows[start:], key=lambda row: cafe.FURN_BY_ID[row['id']]['cost'])
         if 'plant' in slots and 'plant2' in slots:      # accessory list: split window / corner decorations
             groups = (('plant2', '창가 장식'), ('plant', '구석 장식'))
             own = rows[start:]
@@ -412,9 +479,57 @@ def install(cafe):
         if self.tab == 2:
             result.append(dict(kind='hdr', name='진열대 스킨 (모든 판매대에 적용)'))
             self.furn_rows(result, {'stand_skin'})
+        if self.tab == 3:
+            result.append(dict(kind='hdr', name='입구 발매트'))
+            on = owned_furn(self.g, 'doormat') is None
+            result.append(dict(kind='furn', id=DEFAULT_DOORMAT, name='기본 발매트',
+                               sub='기본 제공 · 입구 앞 고정 장식', price='사용중' if on else '적용하기',
+                               state='equipped' if on else 'own', ok=not on,
+                               icon=cafe.icon_for('furn', DEFAULT_DOORMAT)))
+            self.furn_rows(result, {'doormat'})
         return result
 
     UI.rows = rows
+
+    # A virtual default row supports the existing furniture preview/click path
+    # without adding a free item to purchased furniture or achievement counts.
+    cafe.FURN_BY_ID[DEFAULT_DOORMAT] = dict(id=DEFAULT_DOORMAT, slot='doormat', cost=0, bonus=0)
+
+    # The recovered renderer bakes the mat into the floor before drawing guests.
+    # Build a separate shell cache for each chosen mat; transparent corners show
+    # the floor, never the old mat. Keep preview rendering scoped to its game.
+    original_render, original_shell = cafe.render_scene, cafe.get_shell
+    mat_shells = {}
+
+    def render_scene(game, scene, *args, **kwargs):
+        previous = state.get('render_game')
+        state['render_game'] = game
+        try:
+            return original_render(game, scene, *args, **kwargs)
+        finally:
+            state['render_game'] = previous
+
+    def get_shell(wid, fid, season='season_spring'):
+        game = state.get('render_game')
+        item = owned_furn(game, 'doormat') if game is not None else None
+        info = themed.get(item['id']) if item else None
+        if info is None:
+            return original_shell(wid, fid, season)
+        cache = mat_shells.setdefault(item['id'], {})
+        old_cache, old_image = cafe._shell_cache, art.image
+
+        def image(key, *args, **kwargs):
+            if key == 'room/doormat':
+                return sprite(info['theme'], info.get('asset', 'doormat'))
+            return old_image(key, *args, **kwargs)
+
+        cafe._shell_cache, art.image = cache, image
+        try:
+            return original_shell(wid, fid, season)
+        finally:
+            cafe._shell_cache, art.image = old_cache, old_image
+
+    cafe.render_scene, cafe.get_shell = render_scene, get_shell
 
     # ---- stand skins -------------------------------------------------------
     original_layers = art.stand_layers
@@ -424,13 +539,19 @@ def install(cafe):
 
     def preview_game(self):
         view = original_preview(self)
-        state['view'] = view if view is not self.g else None
+        if view is not self.g:
+            view.theme_eq = dict(self.g.theme_eq)
+            for (kind, slot), key in self.preview_items.items():
+                if kind == 'furn':
+                    view.theme_eq[slot] = key
         return view
 
     UI.preview_game = preview_game
 
     def stand_layers(key):
-        game = state.get('view') or state['game']
+        # Catalog thumbnails always show the stand being sold. Only a scene
+        # render may apply that scene's equipped (or previewed) stand skin.
+        game = state.get('render_game')
         skin = None
         if game is not None:
             owned = owned_furn(game, 'stand_skin')
@@ -450,6 +571,34 @@ def install(cafe):
 
     art.stand_layers = stand_layers
 
+    def stand_theme():
+        game = state.get('render_game')
+        item = owned_furn(game, 'stand_skin') if game is not None else None
+        return themed[item['id']]['theme'] if item is not None else None
+
+    def slot_pos(st, index):
+        return stand_food_layout(st, stand_theme())[index][:2]
+
+    def draw_stand(surface, st, tick, bread_ids=None):
+        cafe._stand_base(surface, st, tick)
+        theme = stand_theme()
+        layout = stand_food_layout(st, theme)
+        if theme and st['slots'] > 4:
+            # Theme art has one counter deck. Add a real upper shelf for the
+            # second row so its bread never appears suspended against glass.
+            trim = {'spring': (174, 114, 76), 'summer': (192, 164, 120),
+                    'autumn': (156, 94, 54), 'winter': (126, 125, 98),
+                    'golden': (170, 143, 92)}[theme]
+            cafe.R(surface, trim, st['x'] + 10, layout[0][1], 44, 1)
+        for bid, (cx, baseline, width, height) in zip(bread_ids or (), layout):
+            if not bid:
+                continue
+            food = art.placed_food(cafe.RECIPE[bid]['spr'], width, height)
+            surface.blit(food, (cx - food.get_width() // 2, baseline - food.get_height()))
+        cafe._stand_cover(surface, st, tick)
+
+    cafe.slot_pos, cafe.draw_stand = slot_pos, draw_stand
+
     # ---- hero: themed hair / outfit / accessory ----------------------------
     original_hero = art.hero
 
@@ -458,6 +607,7 @@ def install(cafe):
         return theme, part
 
     hair_browns = {(117, 63, 43), (106, 61, 43), (130, 72, 47), (109, 73, 54)}
+    skin_tones = {(251, 228, 199), (235, 192, 147), (251, 232, 206)}
     face_masks = {}
 
     def face_of(head, scale):
@@ -488,9 +638,18 @@ def install(cafe):
             for y in range(0, 34):
                 for x in range(0, 24):
                     c = base.get_at((x, y))
-                    if c.a and tuple(c)[:3] in hair_browns:
+                    if not c.a:
+                        continue
+                    rgb = tuple(c)[:3]
+                    if rgb in hair_browns:
                         mask.set_at((x, y), (0, 0, 0, 0))
                         if 5 <= x <= 18 and 6 <= y <= 18:
+                            fill.append((x, y))
+                    elif rgb not in skin_tones and not (8 <= x <= 16 and 10 <= y <= 18):
+                        # The hair's dark outline and highlight pixels: left behind they show
+                        # through light themed hair (silver, white) as a second head of hair.
+                        mask.set_at((x, y), (0, 0, 0, 0))
+                        if 4 <= x <= 19 and 6 <= y <= 18:
                             fill.append((x, y))
             face_masks['hair'] = mask
             face_masks['fill'] = fill
@@ -563,6 +722,13 @@ def install(cafe):
 
     def icon_for(kind, key, state_='norm'):
         info = themed.get(key)
+        if kind == 'furn' and (key == DEFAULT_DOORMAT or (info and info['part'] == 'doormat')):
+            ck = (kind, key, state_)
+            if ck not in cafe.icon_cache:
+                piece = (art.image('room/doormat') if key == DEFAULT_DOORMAT else
+                         sprite(info['theme'], info.get('asset', 'doormat')))
+                cafe.icon_cache[ck] = cafe.scale_fit(piece)
+            return cafe.icon_cache[ck]
         if kind != 'hero' or info is None or info['part'] not in (
                 'hair', 'outfit_1', 'outfit_2', 'accessory_1', 'accessory_2'):
             return original_icon(kind, key, state_)
@@ -578,12 +744,16 @@ def install(cafe):
                 box = pygame.Rect(2, 0, 20, 22)
             elif cat == 'top':
                 top = cafe.HERO_BY_ID[key][1]['v']
-                box = pygame.Rect(0, 17, 24, 17)
+                box = piece.get_bounding_rect().inflate(2, 2).clip(piece.get_rect())
             elif cat == 'acc':
                 # Waist rings, scarf tails and parasol handles extend below the face.
                 box = piece.get_bounding_rect().union(pygame.Rect(0, 0, 24, 24))
                 box = box.inflate(2, 2).clip(piece.get_rect())
             image = cafe.hero_surf(hair, top, cafe.HERO_BY_ID[key][1]['v'] if cat == 'acc' else 'none', 0, 1)
+            if cat == 'top' and image.get_size() == piece.get_size():
+                # Outfit only: drop the chin/face pixels the outfit sprite does not cover.
+                image = pygame.mask.from_surface(piece).to_surface(
+                    setsurface=image, unsetcolor=(0, 0, 0, 0))
             cafe.icon_cache[ck] = cafe.scale_fit(art.dr.crop(image, box))
         return cafe.icon_cache[ck]
 

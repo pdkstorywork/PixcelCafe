@@ -100,6 +100,14 @@ def install_mini_view(cafe):
                 if (event.type == pg.MOUSEBUTTONDOWN and event.button == 1
                         and mini_bar.mini_click(to_logical(event.pos))):
                     continue
+                game = getattr(mini_bar, 'game', lambda: None)()
+                if (event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and game is not None
+                        and game.mini and not game.bar
+                        and to_logical(event.pos)[1] // 2 < ROW_Y - 2):
+                    continue         # only the bottom bar grabs the window (game would start a native drag)
+                if event.type in (pg.MOUSEBUTTONDOWN, pg.MOUSEMOTION, pg.MOUSEBUTTONUP) \
+                        and mini_bar.mini_drag(event, to_logical(event.pos)):
+                    continue
             result.append(convert(event))
         return result
 
@@ -116,6 +124,7 @@ def install_mini_view(cafe):
 # real window by mini_view.present(). Collection unlocks and special guests show
 # up as a speech bubble above the strip.
 import ctypes
+import math
 import time
 
 BAR_W, BAR_H = 320, 32
@@ -175,14 +184,24 @@ def install_mini_bar(cafe):
         game = ref['game']
         return bool(game is not None and game.mini and game.bar)
 
-    def enter(game):
-        game._mini_pos_stash = game.mini_pos
-        game.mini_pos = default_pos()          # the bar always sits on the taskbar
+    def enter(game, keep_position=False):
+        position = cafe.win_pos() if keep_position else None
+        game._mini_pos_stash = position or game.mini_pos
+        game.mini_pos = (position or game.mini_pos) if keep_position else default_pos()
+        if keep_position and game.mini_pos is not None:
+            # collapse toward the mini window's bottom edge: the bar's bottom lines up with it
+            x, y = game.mini_pos
+            game.mini_pos = (x, y + int(LOGICAL[1] * VIEW) - WIN_H)
+        if game.mini_pos is None:
+            game.mini_pos = default_pos()
         game.bar = True
         game.mode_dirty = True
 
     def leave(game):
-        game.mini_pos = mini_default_pos() or getattr(game, '_mini_pos_stash', None)
+        game.mini_pos = getattr(game, '_mini_pos_stash', None) or mini_default_pos()
+        if ref['drag']:
+            ctypes.windll.user32.ReleaseCapture()
+            ref['drag'] = None
         game.bar = False
         game.mode_dirty = True
         del notes[:]
@@ -271,7 +290,7 @@ def install_mini_bar(cafe):
             if slot and y == slot[1] and size in (11, 12):
                 left, right = ref['region']
                 if string.startswith('+') and align == 'mr':
-                    surface.set_clip(None)
+                    surface.set_clip(pg.Rect(left, y - 10, max(0, right - left), 20))
                     return plain_text(surface, string, size, color, left, y, args[0], 'ml', *args[2:], **kwargs)
                 if align == 'ml' and size == 11:
                     surface.set_clip(pg.Rect(left, y - 10, max(0, right - left), 20))
@@ -283,6 +302,18 @@ def install_mini_bar(cafe):
             return plain_text(surface, string, size, color, x, y, *args, **kwargs)
 
         plain_circle = pg.draw.circle
+        plain_rect = pg.draw.rect
+
+        def rect_hook(surface, color, rect, *args, **kwargs):
+            # The recovered bar starts one row below the scene and rounds its top
+            # corners, leaving colour-key holes along the join. Keep the bottom
+            # corners rounded, but join the toolbar flush to the scene above it.
+            box = pg.Rect(rect)
+            if surface is screen and box == pg.Rect(0, cafe.SH + 1, cafe.MW, 19):
+                box.y -= 1
+                box.h += 1
+                kwargs = dict(kwargs, border_top_left_radius=0, border_top_right_radius=0)
+            return plain_rect(surface, color, box, *args, **kwargs)
 
         def circle_hook(surface, color, center, *args, **kwargs):
             if tuple(center) == (GOLD_X - 10, ROW_Y - 2 + 10):     # the yellow coin left of the gold amount
@@ -291,19 +322,20 @@ def install_mini_bar(cafe):
 
         cafe.text = text_hook
         pg.draw.circle = circle_hook
+        pg.draw.rect = rect_hook
         try:
             result = original_draw_mini(screen, game, scene, hidden)
         finally:
             cafe.text = plain_text
             pg.draw.circle = plain_circle
+            pg.draw.rect = plain_rect
         top, bottom = screen.get_height() - 20, screen.get_height() - 2
         pg.draw.line(screen, skin['light'], (6, top + 1), (screen.get_width() - 7, top + 1))   # bevel
         pg.draw.line(screen, skin['edge'], (4, bottom), (screen.get_width() - 5, bottom))
         # repaint the right-hand buttons so all of them share one size and gap
         modes, _old_x, speeds, _old_settings = result
-        # erase the originals with the bar's own colour (sampled from the gap before them), keeping the bevel rows
-        bar_bg = screen.get_at((MIN_RECT[0] - 2, ROW_Y + 8))
-        pg.draw.rect(screen, bar_bg, (MIN_RECT[0] - 1, ROW_Y, screen.get_width() - MIN_RECT[0] - 3, 16))
+        # Use the palette directly: sampling can pick up overflowing income text.
+        pg.draw.rect(screen, skin['fill'], (MIN_RECT[0] - 1, ROW_Y, screen.get_width() - MIN_RECT[0] - 3, 16))
         step = BTN_W + BTN_GAP
         mode_rects = [pg.Rect(MIN_RECT[0] + step * (i + 1), ROW_Y, BTN_W, 16) for i in range(len(modes))]
         xbtn = pg.Rect(MIN_RECT[0] + step * (len(modes) + 1), ROW_Y, BTN_W, 16)
@@ -367,7 +399,7 @@ def install_mini_bar(cafe):
         if game is None or not game.mini or game.bar:
             return False
         if pg.Rect(MIN_RECT).collidepoint(logical_pos[0] // 2, logical_pos[1] // 2):
-            enter(game)
+            enter(game, keep_position=True)
             return True
         return False
 
@@ -427,9 +459,7 @@ def install_mini_bar(cafe):
         # a talking guest's payment line replaces the plain sentence; '*action*' lines only if nothing else
         said = [line.strip() for line in getattr(customer, 'happy_say', None) or ()]
         said = next((line for line in said if not line.startswith('*')), said[0].strip('*') if said else '')
-        face = face_of(customer) if said else None
-        if face and face.get_height() > 22:
-            face = pg.transform.smoothscale(face, (max(1, face.get_width() * 22 // face.get_height()), 22))
+        face = None     # a talking guest shows just "name: line", no portrait
         ref['sale'] = dict(who=who, bread=bread, amount=gold, said=said, face=face, start=time.time())
         now = time.time()
         avg, count = ref.get('sale_avg', 0.0), ref.get('sale_count', 0)
@@ -701,21 +731,67 @@ def install_mini_bar(cafe):
                     else:
                         game.toggle_guest_speed(key[1])
                     return
-            point = _Point()
-            ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
             pos = cafe.win_pos()      # None when the window handle is unavailable
-            ref['drag'] = (point.x, point.y, *pos) if pos else None
+            # Anchor to the original click, even when several events arrive in one batch.
+            ref['drag'] = event.pos if pos is not None else None
+            if ref['drag'] is not None:
+                hwnd = pg.display.get_wm_info().get('window')
+                if hwnd:
+                    ctypes.windll.user32.SetCapture(ctypes.c_void_p(hwnd))
         elif event.type == pg.MOUSEMOTION and ref['drag']:
             point = _Point()
             ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
-            sx, sy, wx, wy = ref['drag']
-            cafe.win_move(wx + point.x - sx, wy + point.y - sy)
+            dx, dy = ref['drag']
+            game.mini_pos = (point.x - dx, point.y - dy)
+            cafe.win_move(*game.mini_pos)
         elif event.type == pg.MOUSEBUTTONUP and event.button == 1 and ref['drag']:
             ref['drag'] = None
+            ctypes.windll.user32.ReleaseCapture()
             game.mini_pos = cafe.win_pos() or getattr(game, 'mini_pos', None)
+
+    # ---- mini window: drag from anywhere (guests and toolbar included) ---------------
+    # The game only starts a native caption drag on empty background, so grabbing a guest or
+    # a button moved nothing. Pressing and moving past a few pixels now drags the window.
+    mini_drag_state = {'start': None, 'origin': None, 'moving': False}
+    DRAG_THRESHOLD = 4
+
+    def cursor():
+        point = _Point()
+        ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
+        return point.x, point.y
+
+    def mini_drag(event, logical_pos=None):
+        """True = event consumed by the drag. Only the bottom toolbar row starts a drag."""
+        game = ref['game']
+        st = mini_drag_state
+        if game is None or not game.mini or game.bar:
+            st.update(start=None, moving=False)
+            return False
+        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+            on_bar = logical_pos is not None and logical_pos[1] // 2 >= ROW_Y - 2
+            origin = cafe.win_pos() if on_bar else None
+            st.update(start=cursor() if origin is not None else None, origin=origin, moving=False)
+        elif event.type == pg.MOUSEMOTION and st['start'] is not None:
+            x, y = cursor()
+            sx, sy = st['start']
+            if not st['moving'] and abs(x - sx) + abs(y - sy) < DRAG_THRESHOLD:
+                return False
+            st['moving'] = True
+            ox, oy = st['origin']
+            game.mini_pos = (ox + x - sx, oy + y - sy)
+            cafe.win_move(*game.mini_pos)
+            return True
+        elif event.type == pg.MOUSEBUTTONUP and event.button == 1 and st['start'] is not None:
+            moved = st['moving']
+            st.update(start=None, moving=False)
+            if moved:
+                game.mini_pos = cafe.win_pos() or game.mini_pos
+                return True          # a drag is not a click
+        return False
 
     cafe._bar_api = type('MiniBar', (), dict(
         active=staticmethod(active), draw=staticmethod(draw), handle=staticmethod(handle),
+        mini_drag=staticmethod(mini_drag), game=staticmethod(lambda: ref['game']),
         mini_click=staticmethod(mini_click), enter=staticmethod(enter), size=(WIN_W, WIN_H)))
 
 
@@ -944,6 +1020,13 @@ def install_monitor2(cafe):
 # --- merged from tabs_merge.py: 꾸미기 tab folded into 가구 tab ---
 DECOR_TAB = 3
 FURN_TAB = 2
+FURN_BAND = 58
+# (id, chip label, header-name prefixes shown under that chip)
+FURN_SUBS = (('stand', '판매대', ('판매대', '진열대 스킨')), ('table', '식탁·의자', ('식탁',)),
+             ('kitchen', '주방', ('주방',)), ('scene', '창밖·계절', ('창밖', '계절')),
+             ('acc', '장식', ('액세서리', '창가', '구석')), ('wall', '벽지', ('벽지',)),
+             ('floor', '바닥', ('바닥',)), ('sign', '간판', ('벽 간판',)),
+             ('light', '조명', ('조명',)), ('mat', '발매트', ('입구',)))
 
 
 def install_merged_tabs(cafe):
@@ -956,18 +1039,57 @@ def install_merged_tabs(cafe):
     def rows(self):
         result = original_rows(self)
         if self.tab == FURN_TAB:
-            result.append(dict(kind='hdr', name='꾸미기'))
             self.tab = DECOR_TAB
             try:
                 result.extend(original_rows(self))
             finally:
                 self.tab = FURN_TAB
+            if not getattr(self, '_furn_all', False):
+                result = furn_group(result, getattr(self, 'furn_sub', FURN_SUBS[0][0]))
         return result
+
+    def furn_group(rows, sub):
+        names = dict((sid, keys) for sid, _, keys in FURN_SUBS)[sub]
+        out, keep = [], False
+        for row in rows:
+            if row.get('kind') == 'hdr':
+                keep = row['name'].startswith(names)
+            if keep:
+                out.append(row)
+        return out
+
+    def furn_chips(self, surface):
+        px, py, pw = cafe.PANEL_X, cafe.PANEL_Y, cafe.PANEL_W
+        band = cafe.pygame.Rect(px + 4, py + 88, pw - 8, FURN_BAND)
+        cafe.pygame.draw.rect(surface, (250, 232, 196), band)
+        per = (len(FURN_SUBS) + 1) // 2
+        bw = (band.w - 4) // per
+        cur = getattr(self, 'furn_sub', FURN_SUBS[0][0])
+        self._furn_hits = []
+        for i, (sid, name, _) in enumerate(FURN_SUBS):
+            rect = cafe.pygame.Rect(band.x + 2 + (i % per) * bw, band.y + 3 + (i // per) * 28, bw - 3, 24)
+            active = sid == cur
+            cafe.pygame.draw.rect(surface, (232, 150, 70) if active else (214, 184, 140), rect)
+            cafe.pygame.draw.rect(surface, (54, 34, 24), rect, 2)
+            size = 12
+            while size > 8 and cafe.font(size, True).size(name)[0] > rect.w - 6:
+                size -= 1
+            cafe.text(surface, name, size, (255, 255, 255) if active else (84, 52, 34),
+                      rect.centerx, rect.centery, True, 'mc')
+            self._furn_hits.append((rect, sid))
 
     def draw(self, surface, mouse):
         if self.tab == DECOR_TAB:
             self.tab = FURN_TAB
-        original_draw(self, surface, mouse)
+        saved_off = cafe.LIST_OFF
+        if self.tab == FURN_TAB:
+            cafe.LIST_OFF = saved_off + FURN_BAND + 4
+        try:
+            original_draw(self, surface, mouse)
+        finally:
+            cafe.LIST_OFF = saved_off
+        if self.tab == FURN_TAB:
+            furn_chips(self, surface)
         px, py, pw = cafe.PANEL_X, cafe.PANEL_Y, cafe.PANEL_W
         if self.tab == FURN_TAB and not self.preview_items:
             g = self.g
@@ -1002,11 +1124,85 @@ def install_merged_tabs(cafe):
         # not on the first click of the tab.
         saved = self.tab
         self.tab = FURN_TAB
+        self._furn_all = True
         try:
             self.rows()
         except Exception:
             pass
         finally:
             self.tab = saved
+            self._furn_all = False
 
-    UI.__init__, UI.rows, UI.draw = init, rows, draw
+    original_click = UI.click
+
+    def click(self, pos, game, scene_clicks):
+        if self.tab == FURN_TAB and not self.settings_open:
+            for rect, sid in getattr(self, '_furn_hits', ()):
+                if rect.collidepoint(pos):
+                    self.furn_sub = sid
+                    self.scroll[FURN_TAB] = 0
+                    return
+        return original_click(self, pos, game, scene_clicks)
+
+    UI.__init__, UI.rows, UI.draw, UI.click = init, rows, draw, click
+
+
+# --- smooth, faster mouse-wheel scrolling for every panel list ---
+WHEEL_PX = 150          # per wheel notch (the stock list moved 50px, which made long lists a chore)
+WHEEL_MIN_PX = 50       # smallest per-notch step, used for short lists
+WHEEL_EASE = 16.0      # higher = snappier glide toward the target
+
+
+def install_smooth_scroll(cafe):
+    if getattr(cafe, '_smooth_scroll_installed', False):
+        return
+    cafe._smooth_scroll_installed = True
+    pg, UI = cafe.pygame, cafe.UI
+    wheel = {'y': 0, 't': 0.0}
+    real_get = pg.event.get
+
+    def get(*args, **kwargs):
+        events = real_get(*args, **kwargs)
+        for ev in events:
+            if ev.type == pg.MOUSEWHEEL:
+                wheel['y'] += ev.y
+                wheel['t'] = time.perf_counter()
+        return events
+
+    pg.event.get = get
+    original_draw = UI.draw
+
+    def draw(self, surface, mouse):
+        now = time.perf_counter()
+        st = self.__dict__.setdefault('_smooth', {})
+        ends = self.__dict__.setdefault('_smooth_ends', {})
+        tab = self.tab
+        cur, target, last, stamp = st.get(tab, (0.0, 0.0, 0, now))
+        pos = self.scroll[tab]
+        notch, wheel['y'] = wheel['y'], 0
+        if notch and now - wheel['t'] < 0.5 and not self.settings_open and self.panel_rect().collidepoint(mouse):
+            pos = last                               # undo the stock 50px step, glide instead
+            limit = ends.get(tab)                    # short lists: smaller step so they don't whip past
+            step = WHEEL_PX if limit is None else min(WHEEL_PX, max(WHEEL_MIN_PX, limit / 4))
+            target = max(0.0, target - notch * step)
+            if limit is not None:
+                target = min(target, float(limit))
+        elif pos != last:                            # list was reset or jumped by other code
+            cur = target = float(pos)
+        if abs(target - cur) < 1:
+            cur = target
+        else:
+            cur += (target - cur) * (1 - math.exp(-WHEEL_EASE * min(now - stamp, 0.1)))
+        self.scroll[tab] = int(round(cur))
+        try:
+            original_draw(self, surface, mouse)
+        finally:
+            shown = self.scroll[tab]
+            if shown < int(round(cur)):              # clamped at the bottom of the list
+                cur = target = float(shown)
+                ends[tab] = shown                    # learned the list's real end
+            elif shown > ends.get(tab, shown):
+                ends.pop(tab)                        # list grew
+            st[tab] = (cur, target, shown, now)
+
+    UI.draw = draw

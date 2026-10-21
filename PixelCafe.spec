@@ -15,7 +15,7 @@ a = Analysis(
            ('assets/pixelcafe-atlas-3x.png', 'assets'),
            ('assets/guests', 'assets/guests')] + [
                (f'assets/themes/{t}/native', f'assets/themes/{t}/native')
-               for t in ('spring', 'summer', 'autumn', 'winter', 'golden')],
+               for t in ('spring', 'summer', 'autumn', 'winter', 'golden', 'classic')],
     hiddenimports=['pygame', 'small', 'mini', 'art_runtime', 'chars', 'detail_render', 'props',
                    'specials', 'window_scenery', 'themes', 'ctypes', 'ctypes.wintypes',
                    'atexit', 'copy', 'random', 'math', 'time', 'json'],

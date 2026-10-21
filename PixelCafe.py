@@ -44,6 +44,7 @@ import collection as _collection
 _collection.install(sys.modules[__name__])
 small.install_rare_dialog(sys.modules[__name__])
 small.install_customer_facing(sys.modules[__name__])
+small.install_customer_eating(sys.modules[__name__])
 import themes as _themes
 _themes.install(sys.modules[__name__])
 mini.install_mini_bar(sys.modules[__name__])
@@ -51,6 +52,7 @@ mini.install_mini_view(sys.modules[__name__])
 mini.install_mini_window(sys.modules[__name__])
 mini.install_monitor2(sys.modules[__name__])
 mini.install_merged_tabs(sys.modules[__name__])
+mini.install_smooth_scroll(sys.modules[__name__])
 try:
     # pygame's default window icon (yellow creature with a gamepad) otherwise shows in the taskbar.
     _icon_base = getattr(sys, '_MEIPASS', None) or str(_Path(__file__).resolve().parent)
