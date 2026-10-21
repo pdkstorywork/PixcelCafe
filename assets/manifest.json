@@ -1,0 +1,2794 @@
+{
+  "version": 2,
+  "status": "individually-reworked",
+  "atlas": "pixelcafe-atlas.png",
+  "size": [
+    512,
+    288
+  ],
+  "palette_colors": 128,
+  "alpha": "binary",
+  "entries": {
+    "player/base/short": {
+      "rect": [
+        370,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/player/base/short.png",
+      "master": "assets\\rework\\masters\\player\\base\\short.png",
+      "method": "generated"
+    },
+    "player/base/bob": {
+      "rect": [
+        240,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/player/base/bob.png",
+      "master": "assets\\rework\\masters\\player\\base\\bob.png",
+      "method": "generated"
+    },
+    "player/base/pony": {
+      "rect": [
+        344,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/player/base/pony.png",
+      "master": "assets\\rework\\masters\\player\\base\\pony.png",
+      "method": "generated"
+    },
+    "player/base/twin": {
+      "rect": [
+        396,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/player/base/twin.png",
+      "master": "assets\\rework\\masters\\player\\base\\twin.png",
+      "method": "generated"
+    },
+    "player/base/bun": {
+      "rect": [
+        266,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/player/base/bun.png",
+      "master": "assets\\rework\\masters\\player\\base\\bun.png",
+      "method": "generated"
+    },
+    "player/base/curly": {
+      "rect": [
+        292,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/player/base/curly.png",
+      "master": "assets\\rework\\masters\\player\\base\\curly.png",
+      "method": "generated"
+    },
+    "player/base/long": {
+      "rect": [
+        318,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/player/base/long.png",
+      "master": "assets\\rework\\masters\\player\\base\\long.png",
+      "method": "generated"
+    },
+    "player/outfit/tee": {
+      "rect": [
+        431,
+        220,
+        18,
+        14
+      ],
+      "anchor": [
+        9,
+        12
+      ],
+      "source": "sprites/player/outfit/tee.png",
+      "master": "assets\\rework\\masters\\player\\outfit\\tee.png",
+      "method": "generated"
+    },
+    "player/outfit/apron": {
+      "rect": [
+        311,
+        220,
+        18,
+        14
+      ],
+      "anchor": [
+        9,
+        12
+      ],
+      "source": "sprites/player/outfit/apron.png",
+      "master": "assets\\rework\\masters\\player\\outfit\\apron.png",
+      "method": "generated"
+    },
+    "player/outfit/stripe": {
+      "rect": [
+        411,
+        220,
+        18,
+        14
+      ],
+      "anchor": [
+        9,
+        12
+      ],
+      "source": "sprites/player/outfit/stripe.png",
+      "master": "assets\\rework\\masters\\player\\outfit\\stripe.png",
+      "method": "generated"
+    },
+    "player/outfit/overall": {
+      "rect": [
+        371,
+        220,
+        18,
+        14
+      ],
+      "anchor": [
+        9,
+        12
+      ],
+      "source": "sprites/player/outfit/overall.png",
+      "master": "assets\\rework\\masters\\player\\outfit\\overall.png",
+      "method": "generated"
+    },
+    "player/outfit/pat": {
+      "rect": [
+        391,
+        220,
+        18,
+        14
+      ],
+      "anchor": [
+        9,
+        12
+      ],
+      "source": "sprites/player/outfit/pat.png",
+      "master": "assets\\rework\\masters\\player\\outfit\\pat.png",
+      "method": "generated"
+    },
+    "player/outfit/hood": {
+      "rect": [
+        351,
+        220,
+        18,
+        14
+      ],
+      "anchor": [
+        9,
+        12
+      ],
+      "source": "sprites/player/outfit/hood.png",
+      "master": "assets\\rework\\masters\\player\\outfit\\hood.png",
+      "method": "generated"
+    },
+    "player/outfit/chef": {
+      "rect": [
+        331,
+        220,
+        18,
+        14
+      ],
+      "anchor": [
+        9,
+        12
+      ],
+      "source": "sprites/player/outfit/chef.png",
+      "master": "assets\\rework\\masters\\player\\outfit\\chef.png",
+      "method": "generated"
+    },
+    "player/accessory/glasses": {
+      "rect": [
+        399,
+        261,
+        12,
+        5
+      ],
+      "anchor": [
+        6,
+        3
+      ],
+      "source": "sprites/player/accessory/glasses.png",
+      "master": "assets\\rework\\masters\\player\\accessory\\glasses.png",
+      "method": "generated"
+    },
+    "player/accessory/ribbon": {
+      "rect": [
+        413,
+        261,
+        7,
+        5
+      ],
+      "anchor": [
+        3,
+        3
+      ],
+      "source": "sprites/player/accessory/ribbon.png",
+      "master": "assets\\rework\\masters\\player\\accessory\\ribbon.png",
+      "method": "generated"
+    },
+    "player/accessory/beret": {
+      "rect": [
+        351,
+        261,
+        20,
+        8
+      ],
+      "anchor": [
+        10,
+        6
+      ],
+      "source": "sprites/player/accessory/beret.png",
+      "master": "assets\\rework\\masters\\player\\accessory\\beret.png",
+      "method": "generated"
+    },
+    "player/accessory/scarf": {
+      "rect": [
+        387,
+        261,
+        10,
+        7
+      ],
+      "anchor": [
+        5,
+        5
+      ],
+      "source": "sprites/player/accessory/scarf.png",
+      "master": "assets\\rework\\masters\\player\\accessory\\scarf.png",
+      "method": "generated"
+    },
+    "player/accessory/sunglass": {
+      "rect": [
+        422,
+        261,
+        12,
+        5
+      ],
+      "anchor": [
+        6,
+        3
+      ],
+      "source": "sprites/player/accessory/sunglass.png",
+      "master": "assets\\rework\\masters\\player\\accessory\\sunglass.png",
+      "method": "generated"
+    },
+    "player/accessory/crown": {
+      "rect": [
+        373,
+        261,
+        12,
+        7
+      ],
+      "anchor": [
+        6,
+        5
+      ],
+      "source": "sprites/player/accessory/crown.png",
+      "master": "assets\\rework\\masters\\player\\accessory\\crown.png",
+      "method": "generated"
+    },
+    "player/accessory/toque": {
+      "rect": [
+        317,
+        261,
+        16,
+        10
+      ],
+      "anchor": [
+        8,
+        8
+      ],
+      "source": "sprites/player/accessory/toque.png",
+      "master": "assets\\rework\\masters\\player\\accessory\\toque.png",
+      "method": "generated"
+    },
+    "animal/cat/0": {
+      "rect": [
+        366,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/cat/0.png",
+      "master": "assets\\rework\\masters\\animal\\cat\\0.png",
+      "method": "generated"
+    },
+    "animal/cat/1": {
+      "rect": [
+        390,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/cat/1.png",
+      "master": "assets\\rework\\masters\\animal\\cat\\1.png",
+      "method": "generated"
+    },
+    "animal/cat/2": {
+      "rect": [
+        414,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/cat/2.png",
+      "master": "assets\\rework\\masters\\animal\\cat\\2.png",
+      "method": "generated"
+    },
+    "animal/cat/3": {
+      "rect": [
+        438,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/cat/3.png",
+      "master": "assets\\rework\\masters\\animal\\cat\\3.png",
+      "method": "generated"
+    },
+    "animal/dog/0": {
+      "rect": [
+        462,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/dog/0.png",
+      "master": "assets\\rework\\masters\\animal\\dog\\0.png",
+      "method": "generated"
+    },
+    "animal/dog/1": {
+      "rect": [
+        486,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/dog/1.png",
+      "master": "assets\\rework\\masters\\animal\\dog\\1.png",
+      "method": "generated"
+    },
+    "animal/dog/2": {
+      "rect": [
+        2,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/dog/2.png",
+      "master": "assets\\rework\\masters\\animal\\dog\\2.png",
+      "method": "generated"
+    },
+    "animal/dog/3": {
+      "rect": [
+        26,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/dog/3.png",
+      "master": "assets\\rework\\masters\\animal\\dog\\3.png",
+      "method": "generated"
+    },
+    "animal/rabbit/0": {
+      "rect": [
+        242,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/rabbit/0.png",
+      "master": "assets\\rework\\masters\\animal\\rabbit\\0.png",
+      "method": "generated"
+    },
+    "animal/rabbit/1": {
+      "rect": [
+        266,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/rabbit/1.png",
+      "master": "assets\\rework\\masters\\animal\\rabbit\\1.png",
+      "method": "generated"
+    },
+    "animal/rabbit/2": {
+      "rect": [
+        290,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/rabbit/2.png",
+      "master": "assets\\rework\\masters\\animal\\rabbit\\2.png",
+      "method": "generated"
+    },
+    "animal/bear/0": {
+      "rect": [
+        294,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/bear/0.png",
+      "master": "assets\\rework\\masters\\animal\\bear\\0.png",
+      "method": "generated"
+    },
+    "animal/bear/1": {
+      "rect": [
+        318,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/bear/1.png",
+      "master": "assets\\rework\\masters\\animal\\bear\\1.png",
+      "method": "generated"
+    },
+    "animal/bear/2": {
+      "rect": [
+        342,
+        132,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/bear/2.png",
+      "master": "assets\\rework\\masters\\animal\\bear\\2.png",
+      "method": "generated"
+    },
+    "animal/hamster/0": {
+      "rect": [
+        98,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/hamster/0.png",
+      "master": "assets\\rework\\masters\\animal\\hamster\\0.png",
+      "method": "generated"
+    },
+    "animal/hamster/1": {
+      "rect": [
+        122,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/hamster/1.png",
+      "master": "assets\\rework\\masters\\animal\\hamster\\1.png",
+      "method": "generated"
+    },
+    "animal/hamster/2": {
+      "rect": [
+        146,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/hamster/2.png",
+      "master": "assets\\rework\\masters\\animal\\hamster\\2.png",
+      "method": "generated"
+    },
+    "animal/fox/0": {
+      "rect": [
+        50,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/fox/0.png",
+      "master": "assets\\rework\\masters\\animal\\fox\\0.png",
+      "method": "generated"
+    },
+    "animal/fox/1": {
+      "rect": [
+        74,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/fox/1.png",
+      "master": "assets\\rework\\masters\\animal\\fox\\1.png",
+      "method": "generated"
+    },
+    "animal/mouse/0": {
+      "rect": [
+        170,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/mouse/0.png",
+      "master": "assets\\rework\\masters\\animal\\mouse\\0.png",
+      "method": "generated"
+    },
+    "animal/mouse/1": {
+      "rect": [
+        194,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/mouse/1.png",
+      "master": "assets\\rework\\masters\\animal\\mouse\\1.png",
+      "method": "generated"
+    },
+    "animal/mouse/2": {
+      "rect": [
+        218,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/animal/mouse/2.png",
+      "master": "assets\\rework\\masters\\animal\\mouse\\2.png",
+      "method": "generated"
+    },
+    "staff/apprentice": {
+      "rect": [
+        170,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "assets/staff-animals/apprentice.png",
+      "master": "assets/staff-animals/apprentice.png",
+      "method": "animal-base-with-hand-drawn-uniform",
+      "species": "hamster"
+    },
+    "staff/clerk": {
+      "rect": [
+        242,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "assets/staff-animals/clerk.png",
+      "master": "assets/staff-animals/clerk.png",
+      "method": "animal-base-with-hand-drawn-uniform",
+      "species": "rabbit"
+    },
+    "staff/barista": {
+      "rect": [
+        194,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "assets/staff-animals/barista.png",
+      "master": "assets/staff-animals/barista.png",
+      "method": "animal-base-with-hand-drawn-uniform",
+      "species": "mouse"
+    },
+    "staff/patissier": {
+      "rect": [
+        266,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "assets/staff-animals/patissier.png",
+      "master": "assets/staff-animals/patissier.png",
+      "method": "animal-base-with-hand-drawn-uniform",
+      "species": "cat"
+    },
+    "staff/rider": {
+      "rect": [
+        290,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "assets/staff-animals/rider.png",
+      "master": "assets/staff-animals/rider.png",
+      "method": "animal-base-with-hand-drawn-uniform",
+      "species": "fox"
+    },
+    "staff/chef": {
+      "rect": [
+        218,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "assets/staff-animals/chef.png",
+      "master": "assets/staff-animals/chef.png",
+      "method": "animal-base-with-hand-drawn-uniform",
+      "species": "bear"
+    },
+    "family/variant01": {
+      "rect": [
+        448,
+        2,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant01.png",
+      "master": "assets\\rework\\masters\\family\\variant01.png",
+      "method": "generated"
+    },
+    "family/variant02": {
+      "rect": [
+        474,
+        2,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant02.png",
+      "master": "assets\\rework\\masters\\family\\variant02.png",
+      "method": "generated"
+    },
+    "family/variant03": {
+      "rect": [
+        2,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant03.png",
+      "master": "assets\\rework\\masters\\family\\variant03.png",
+      "method": "generated"
+    },
+    "family/variant04": {
+      "rect": [
+        28,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant04.png",
+      "master": "assets\\rework\\masters\\family\\variant04.png",
+      "method": "generated"
+    },
+    "family/variant05": {
+      "rect": [
+        54,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant05.png",
+      "master": "assets\\rework\\masters\\family\\variant05.png",
+      "method": "generated"
+    },
+    "family/variant06": {
+      "rect": [
+        80,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant06.png",
+      "master": "assets\\rework\\masters\\family\\variant06.png",
+      "method": "generated"
+    },
+    "family/variant07": {
+      "rect": [
+        106,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant07.png",
+      "master": "assets\\rework\\masters\\family\\variant07.png",
+      "method": "generated"
+    },
+    "family/variant08": {
+      "rect": [
+        132,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant08.png",
+      "master": "assets\\rework\\masters\\family\\variant08.png",
+      "method": "generated"
+    },
+    "family/variant09": {
+      "rect": [
+        158,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/family/variant09.png",
+      "master": "assets\\rework\\masters\\family\\variant09.png",
+      "method": "generated"
+    },
+    "rare/chiikawa": {
+      "rect": [
+        338,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/chiikawa.png",
+      "master": "assets\\rework\\masters\\rare\\chiikawa.png",
+      "method": "generated"
+    },
+    "rare/usagi": {
+      "rect": [
+        146,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/usagi.png",
+      "master": "assets\\rework\\masters\\rare\\usagi.png",
+      "method": "generated"
+    },
+    "rare/hachiware": {
+      "rect": [
+        434,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/hachiware.png",
+      "master": "assets\\rework\\masters\\rare\\hachiware.png",
+      "method": "generated"
+    },
+    "rare/kitty": {
+      "rect": [
+        458,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/kitty.png",
+      "master": "assets\\rework\\masters\\rare\\kitty.png",
+      "method": "generated"
+    },
+    "rare/melody": {
+      "rect": [
+        26,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/melody.png",
+      "master": "assets\\rework\\masters\\rare\\melody.png",
+      "method": "generated"
+    },
+    "rare/kuromi": {
+      "rect": [
+        482,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/kuromi.png",
+      "master": "assets\\rework\\masters\\rare\\kuromi.png",
+      "method": "generated"
+    },
+    "rare/cinna": {
+      "rect": [
+        386,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/cinna.png",
+      "master": "assets\\rework\\masters\\rare\\cinna.png",
+      "method": "generated"
+    },
+    "rare/purin": {
+      "rect": [
+        98,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/purin.png",
+      "master": "assets\\rework\\masters\\rare\\purin.png",
+      "method": "generated"
+    },
+    "rare/ganadi": {
+      "rect": [
+        410,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/ganadi.png",
+      "master": "assets\\rework\\masters\\rare\\ganadi.png",
+      "method": "generated"
+    },
+    "rare/loopy": {
+      "rect": [
+        2,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/loopy.png",
+      "master": "assets\\rework\\masters\\rare\\loopy.png",
+      "method": "generated"
+    },
+    "rare/ryan": {
+      "rect": [
+        122,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/ryan.png",
+      "master": "assets\\rework\\masters\\rare\\ryan.png",
+      "method": "generated"
+    },
+    "rare/apeach": {
+      "rect": [
+        314,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/apeach.png",
+      "master": "assets\\rework\\masters\\rare\\apeach.png",
+      "method": "generated"
+    },
+    "rare/pororo": {
+      "rect": [
+        74,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/pororo.png",
+      "master": "assets\\rework\\masters\\rare\\pororo.png",
+      "method": "generated"
+    },
+    "rare/pikachu": {
+      "rect": [
+        50,
+        192,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/pikachu.png",
+      "master": "assets\\rework\\masters\\rare\\pikachu.png",
+      "method": "retained-normalized"
+    },
+    "rare/chunsik": {
+      "rect": [
+        362,
+        164,
+        22,
+        26
+      ],
+      "anchor": [
+        11,
+        24
+      ],
+      "source": "sprites/rare/chunsik.png",
+      "master": "assets\\rework\\masters\\rare\\chunsik.png",
+      "method": "generated"
+    },
+    "food/bread": {
+      "rect": [
+        110,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/bread.png",
+      "master": "assets\\rework\\masters\\food\\bread.png",
+      "method": "generated"
+    },
+    "food/roll": {
+      "rect": [
+        114,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/roll.png",
+      "master": "assets\\rework\\masters\\food\\roll.png",
+      "method": "generated"
+    },
+    "food/soboro": {
+      "rect": [
+        210,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/soboro.png",
+      "master": "assets\\rework\\masters\\food\\soboro.png",
+      "method": "generated"
+    },
+    "food/redbean": {
+      "rect": [
+        98,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/redbean.png",
+      "master": "assets\\rework\\masters\\food\\redbean.png",
+      "method": "generated"
+    },
+    "food/cream": {
+      "rect": [
+        254,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/cream.png",
+      "master": "assets\\rework\\masters\\food\\cream.png",
+      "method": "generated"
+    },
+    "food/salt": {
+      "rect": [
+        146,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/salt.png",
+      "master": "assets\\rework\\masters\\food\\salt.png",
+      "method": "generated"
+    },
+    "food/croissant": {
+      "rect": [
+        286,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/croissant.png",
+      "master": "assets\\rework\\masters\\food\\croissant.png",
+      "method": "generated"
+    },
+    "food/baguette": {
+      "rect": [
+        78,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/baguette.png",
+      "master": "assets\\rework\\masters\\food\\baguette.png",
+      "method": "generated"
+    },
+    "food/madeleine": {
+      "rect": [
+        478,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/madeleine.png",
+      "master": "assets\\rework\\masters\\food\\madeleine.png",
+      "method": "generated"
+    },
+    "food/tart": {
+      "rect": [
+        242,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/tart.png",
+      "master": "assets\\rework\\masters\\food\\tart.png",
+      "method": "generated"
+    },
+    "food/macaron": {
+      "rect": [
+        462,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/macaron.png",
+      "master": "assets\\rework\\masters\\food\\macaron.png",
+      "method": "generated"
+    },
+    "food/cake": {
+      "rect": [
+        174,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/cake.png",
+      "master": "assets\\rework\\masters\\food\\cake.png",
+      "method": "generated"
+    },
+    "food/strawberry": {
+      "rect": [
+        226,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/strawberry.png",
+      "master": "assets\\rework\\masters\\food\\strawberry.png",
+      "method": "generated"
+    },
+    "food/wedding": {
+      "rect": [
+        290,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/wedding.png",
+      "master": "assets\\rework\\masters\\food\\wedding.png",
+      "method": "generated"
+    },
+    "food/eggtoast": {
+      "rect": [
+        334,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/eggtoast.png",
+      "master": "assets\\rework\\masters\\food\\eggtoast.png",
+      "method": "generated"
+    },
+    "food/pancake": {
+      "rect": [
+        50,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/pancake.png",
+      "master": "assets\\rework\\masters\\food\\pancake.png",
+      "method": "generated"
+    },
+    "food/frenchtoast": {
+      "rect": [
+        382,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/frenchtoast.png",
+      "master": "assets\\rework\\masters\\food\\frenchtoast.png",
+      "method": "generated"
+    },
+    "food/sandwich": {
+      "rect": [
+        162,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/sandwich.png",
+      "master": "assets\\rework\\masters\\food\\sandwich.png",
+      "method": "generated"
+    },
+    "food/omelet": {
+      "rect": [
+        18,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/omelet.png",
+      "master": "assets\\rework\\masters\\food\\omelet.png",
+      "method": "generated"
+    },
+    "food/benedict": {
+      "rect": [
+        94,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/benedict.png",
+      "master": "assets\\rework\\masters\\food\\benedict.png",
+      "method": "generated"
+    },
+    "food/avotoast": {
+      "rect": [
+        46,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/avotoast.png",
+      "master": "assets\\rework\\masters\\food\\avotoast.png",
+      "method": "generated"
+    },
+    "food/brunch": {
+      "rect": [
+        142,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/brunch.png",
+      "master": "assets\\rework\\masters\\food\\brunch.png",
+      "method": "generated"
+    },
+    "food/waffle": {
+      "rect": [
+        274,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/waffle.png",
+      "master": "assets\\rework\\masters\\food\\waffle.png",
+      "method": "generated"
+    },
+    "food/tiramisu": {
+      "rect": [
+        258,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/tiramisu.png",
+      "master": "assets\\rework\\masters\\food\\tiramisu.png",
+      "method": "generated"
+    },
+    "food/latte": {
+      "rect": [
+        446,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/latte.png",
+      "master": "assets\\rework\\masters\\food\\latte.png",
+      "method": "generated"
+    },
+    "food/burger": {
+      "rect": [
+        158,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/burger.png",
+      "master": "assets\\rework\\masters\\food\\burger.png",
+      "method": "generated"
+    },
+    "food/pizza": {
+      "rect": [
+        66,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/pizza.png",
+      "master": "assets\\rework\\masters\\food\\pizza.png",
+      "method": "generated"
+    },
+    "food/juice": {
+      "rect": [
+        414,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/juice.png",
+      "master": "assets\\rework\\masters\\food\\juice.png",
+      "method": "generated"
+    },
+    "food/garlic": {
+      "rect": [
+        398,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/garlic.png",
+      "master": "assets\\rework\\masters\\food\\garlic.png",
+      "method": "generated"
+    },
+    "food/bagel": {
+      "rect": [
+        62,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/bagel.png",
+      "master": "assets\\rework\\masters\\food\\bagel.png",
+      "method": "generated"
+    },
+    "food/pretzel": {
+      "rect": [
+        82,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/pretzel.png",
+      "master": "assets\\rework\\masters\\food\\pretzel.png",
+      "method": "generated"
+    },
+    "food/rye": {
+      "rect": [
+        130,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/rye.png",
+      "master": "assets\\rework\\masters\\food\\rye.png",
+      "method": "generated"
+    },
+    "food/muffin": {
+      "rect": [
+        2,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/muffin.png",
+      "master": "assets\\rework\\masters\\food\\muffin.png",
+      "method": "generated"
+    },
+    "food/mocha": {
+      "rect": [
+        494,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/mocha.png",
+      "master": "assets\\rework\\masters\\food\\mocha.png",
+      "method": "generated"
+    },
+    "food/focaccia": {
+      "rect": [
+        366,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/focaccia.png",
+      "master": "assets\\rework\\masters\\food\\focaccia.png",
+      "method": "generated"
+    },
+    "food/sausage": {
+      "rect": [
+        178,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/sausage.png",
+      "master": "assets\\rework\\masters\\food\\sausage.png",
+      "method": "generated"
+    },
+    "food/brioche": {
+      "rect": [
+        126,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/brioche.png",
+      "master": "assets\\rework\\masters\\food\\brioche.png",
+      "method": "generated"
+    },
+    "food/creampuff": {
+      "rect": [
+        270,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/creampuff.png",
+      "master": "assets\\rework\\masters\\food\\creampuff.png",
+      "method": "generated"
+    },
+    "food/cinnamon": {
+      "rect": [
+        238,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/cinnamon.png",
+      "master": "assets\\rework\\masters\\food\\cinnamon.png",
+      "method": "generated"
+    },
+    "food/eclair": {
+      "rect": [
+        318,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/eclair.png",
+      "master": "assets\\rework\\masters\\food\\eclair.png",
+      "method": "generated"
+    },
+    "food/applepie": {
+      "rect": [
+        30,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/applepie.png",
+      "master": "assets\\rework\\masters\\food\\applepie.png",
+      "method": "generated"
+    },
+    "food/castella": {
+      "rect": [
+        206,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/castella.png",
+      "master": "assets\\rework\\masters\\food\\castella.png",
+      "method": "generated"
+    },
+    "food/kkwabaegi": {
+      "rect": [
+        430,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/kkwabaegi.png",
+      "master": "assets\\rework\\masters\\food\\kkwabaegi.png",
+      "method": "generated"
+    },
+    "food/anbutter": {
+      "rect": [
+        14,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/anbutter.png",
+      "master": "assets\\rework\\masters\\food\\anbutter.png",
+      "method": "generated"
+    },
+    "food/donut": {
+      "rect": [
+        302,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/donut.png",
+      "master": "assets\\rework\\masters\\food\\donut.png",
+      "method": "generated"
+    },
+    "food/painauchoc": {
+      "rect": [
+        34,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/painauchoc.png",
+      "master": "assets\\rework\\masters\\food\\painauchoc.png",
+      "method": "generated"
+    },
+    "food/scone": {
+      "rect": [
+        194,
+        261,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/scone.png",
+      "master": "assets\\rework\\masters\\food\\scone.png",
+      "method": "generated"
+    },
+    "food/financier": {
+      "rect": [
+        350,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/financier.png",
+      "master": "assets\\rework\\masters\\food\\financier.png",
+      "method": "generated"
+    },
+    "food/ciabatta": {
+      "rect": [
+        222,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/ciabatta.png",
+      "master": "assets\\rework\\masters\\food\\ciabatta.png",
+      "method": "generated"
+    },
+    "food/campagne": {
+      "rect": [
+        190,
+        246,
+        14,
+        12
+      ],
+      "anchor": [
+        7,
+        10
+      ],
+      "source": "sprites/food/campagne.png",
+      "master": "assets\\rework\\masters\\food\\campagne.png",
+      "method": "generated"
+    },
+    "furniture/stand1": {
+      "rect": [
+        184,
+        2,
+        64,
+        36
+      ],
+      "anchor": [
+        32,
+        34
+      ],
+      "source": "sprites/furniture/stand1.png",
+      "master": "assets\\rework\\masters\\furniture\\stand1.png",
+      "method": "generated"
+    },
+    "furniture/stand3": {
+      "rect": [
+        250,
+        2,
+        64,
+        36
+      ],
+      "anchor": [
+        32,
+        34
+      ],
+      "source": "sprites/furniture/stand3.png",
+      "master": "assets\\rework\\masters\\furniture\\stand3.png",
+      "method": "generated"
+    },
+    "furniture/stand4": {
+      "rect": [
+        316,
+        2,
+        64,
+        36
+      ],
+      "anchor": [
+        32,
+        34
+      ],
+      "source": "sprites/furniture/stand4.png",
+      "master": "assets\\rework\\masters\\furniture\\stand4.png",
+      "method": "generated"
+    },
+    "furniture/stand6": {
+      "rect": [
+        382,
+        2,
+        64,
+        36
+      ],
+      "anchor": [
+        32,
+        34
+      ],
+      "source": "sprites/furniture/stand6.png",
+      "master": "assets\\rework\\masters\\furniture\\stand6.png",
+      "method": "generated"
+    },
+    "furniture/counter1": {
+      "rect": [
+        396,
+        98,
+        76,
+        30
+      ],
+      "anchor": [
+        38,
+        28
+      ],
+      "source": "sprites/furniture/counter1.png",
+      "master": "assets\\rework\\masters\\furniture\\counter1.png",
+      "method": "generated"
+    },
+    "furniture/counter2": {
+      "rect": [
+        2,
+        132,
+        76,
+        30
+      ],
+      "anchor": [
+        38,
+        28
+      ],
+      "source": "sprites/furniture/counter2.png",
+      "master": "assets\\rework\\masters\\furniture\\counter2.png",
+      "method": "generated"
+    },
+    "furniture/counter3": {
+      "rect": [
+        80,
+        132,
+        76,
+        30
+      ],
+      "anchor": [
+        38,
+        28
+      ],
+      "source": "sprites/furniture/counter3.png",
+      "master": "assets\\rework\\masters\\furniture\\counter3.png",
+      "method": "generated"
+    },
+    "furniture/oven1": {
+      "rect": [
+        158,
+        132,
+        42,
+        28
+      ],
+      "anchor": [
+        21,
+        26
+      ],
+      "source": "sprites/furniture/oven1.png",
+      "master": "assets\\rework\\masters\\furniture\\oven1.png",
+      "method": "generated"
+    },
+    "furniture/oven2": {
+      "rect": [
+        184,
+        62,
+        54,
+        34
+      ],
+      "anchor": [
+        27,
+        32
+      ],
+      "source": "sprites/furniture/oven2.png",
+      "master": "assets\\rework\\masters\\furniture\\oven2.png",
+      "method": "generated"
+    },
+    "furniture/oven3": {
+      "rect": [
+        70,
+        2,
+        62,
+        56
+      ],
+      "anchor": [
+        31,
+        54
+      ],
+      "source": "sprites/furniture/oven3.png",
+      "master": "assets\\rework\\masters\\furniture\\oven3.png",
+      "method": "generated"
+    },
+    "furniture/oven4": {
+      "rect": [
+        2,
+        2,
+        66,
+        58
+      ],
+      "anchor": [
+        33,
+        56
+      ],
+      "source": "sprites/furniture/oven4.png",
+      "master": "assets\\rework\\masters\\furniture\\oven4.png",
+      "method": "generated"
+    },
+    "furniture/tableL1": {
+      "rect": [
+        224,
+        132,
+        48,
+        28
+      ],
+      "anchor": [
+        24,
+        26
+      ],
+      "source": "sprites/furniture/tableL1.png",
+      "master": "assets\\rework\\masters\\furniture\\tableL1.png",
+      "method": "generated"
+    },
+    "furniture/tableL2": {
+      "rect": [
+        2,
+        98,
+        52,
+        32
+      ],
+      "anchor": [
+        26,
+        30
+      ],
+      "source": "sprites/furniture/tableL2.png",
+      "master": "assets\\rework\\masters\\furniture\\tableL2.png",
+      "method": "generated"
+    },
+    "furniture/tableR1": {
+      "rect": [
+        200,
+        220,
+        44,
+        22
+      ],
+      "anchor": [
+        22,
+        20
+      ],
+      "source": "sprites/furniture/tableR1.png",
+      "master": "assets\\rework\\masters\\furniture\\tableR1.png",
+      "method": "generated"
+    },
+    "furniture/tableR2": {
+      "rect": [
+        332,
+        192,
+        50,
+        24
+      ],
+      "anchor": [
+        25,
+        22
+      ],
+      "source": "sprites/furniture/tableR2.png",
+      "master": "assets\\rework\\masters\\furniture\\tableR2.png",
+      "method": "generated"
+    },
+    "furniture/plant1": {
+      "rect": [
+        274,
+        132,
+        18,
+        27
+      ],
+      "anchor": [
+        9,
+        25
+      ],
+      "source": "sprites/furniture/plant1.png",
+      "master": "assets\\rework\\masters\\furniture\\plant1.png",
+      "method": "generated"
+    },
+    "furniture/plant2": {
+      "rect": [
+        134,
+        2,
+        24,
+        42
+      ],
+      "anchor": [
+        12,
+        40
+      ],
+      "source": "sprites/furniture/plant2.png",
+      "master": "assets\\rework\\masters\\furniture\\plant2.png",
+      "method": "generated"
+    },
+    "furniture/record": {
+      "rect": [
+        291,
+        220,
+        18,
+        14
+      ],
+      "anchor": [
+        9,
+        12
+      ],
+      "source": "sprites/furniture/record.png",
+      "master": "assets\\rework\\masters\\furniture\\record.png",
+      "method": "generated"
+    },
+    "furniture/catbed": {
+      "rect": [
+        246,
+        220,
+        32,
+        18
+      ],
+      "anchor": [
+        16,
+        16
+      ],
+      "source": "sprites/furniture/catbed.png",
+      "master": "assets\\rework\\masters\\furniture\\catbed.png",
+      "method": "generated"
+    },
+    "furniture/coffee": {
+      "rect": [
+        314,
+        192,
+        16,
+        24
+      ],
+      "anchor": [
+        8,
+        22
+      ],
+      "source": "sprites/furniture/coffee.png",
+      "master": "assets\\rework\\masters\\furniture\\coffee.png",
+      "method": "generated"
+    },
+    "furniture/shelf": {
+      "rect": [
+        202,
+        132,
+        20,
+        28
+      ],
+      "anchor": [
+        10,
+        26
+      ],
+      "source": "sprites/furniture/shelf.png",
+      "master": "assets\\rework\\masters\\furniture\\shelf.png",
+      "method": "generated"
+    },
+    "room/wall1": {
+      "rect": [
+        226,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/wall1.png",
+      "master": "assets\\rework\\masters\\room\\wall1.png",
+      "method": "generated"
+    },
+    "room/wall2": {
+      "rect": [
+        260,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/wall2.png",
+      "master": "assets\\rework\\masters\\room\\wall2.png",
+      "method": "generated"
+    },
+    "room/wall3": {
+      "rect": [
+        294,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/wall3.png",
+      "master": "assets\\rework\\masters\\room\\wall3.png",
+      "method": "generated"
+    },
+    "room/wall4": {
+      "rect": [
+        328,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/wall4.png",
+      "master": "assets\\rework\\masters\\room\\wall4.png",
+      "method": "generated"
+    },
+    "room/wall5": {
+      "rect": [
+        362,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/wall5.png",
+      "master": "assets\\rework\\masters\\room\\wall5.png",
+      "method": "generated"
+    },
+    "room/floor1": {
+      "rect": [
+        56,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/floor1.png",
+      "master": "assets\\rework\\masters\\room\\floor1.png",
+      "method": "generated"
+    },
+    "room/floor2": {
+      "rect": [
+        90,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/floor2.png",
+      "master": "assets\\rework\\masters\\room\\floor2.png",
+      "method": "generated"
+    },
+    "room/floor3": {
+      "rect": [
+        124,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/floor3.png",
+      "master": "assets\\rework\\masters\\room\\floor3.png",
+      "method": "generated"
+    },
+    "room/floor4": {
+      "rect": [
+        158,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/floor4.png",
+      "master": "assets\\rework\\masters\\room\\floor4.png",
+      "method": "generated"
+    },
+    "room/floor5": {
+      "rect": [
+        192,
+        98,
+        32,
+        32
+      ],
+      "anchor": [
+        16,
+        30
+      ],
+      "source": "sprites/room/floor5.png",
+      "master": "assets\\rework\\masters\\room\\floor5.png",
+      "method": "generated"
+    },
+    "room/sign1": {
+      "rect": [
+        384,
+        192,
+        64,
+        24
+      ],
+      "anchor": [
+        32,
+        22
+      ],
+      "source": "sprites/room/sign1.png",
+      "master": "assets\\rework\\masters\\room\\sign1.png",
+      "method": "generated"
+    },
+    "room/sign2": {
+      "rect": [
+        2,
+        220,
+        64,
+        24
+      ],
+      "anchor": [
+        32,
+        22
+      ],
+      "source": "sprites/room/sign2.png",
+      "master": "assets\\rework\\masters\\room\\sign2.png",
+      "method": "generated"
+    },
+    "room/sign3": {
+      "rect": [
+        68,
+        220,
+        64,
+        24
+      ],
+      "anchor": [
+        32,
+        22
+      ],
+      "source": "sprites/room/sign3.png",
+      "master": "assets\\rework\\masters\\room\\sign3.png",
+      "method": "generated"
+    },
+    "room/sign4": {
+      "rect": [
+        134,
+        220,
+        64,
+        24
+      ],
+      "anchor": [
+        32,
+        22
+      ],
+      "source": "sprites/room/sign4.png",
+      "master": "assets\\rework\\masters\\room\\sign4.png",
+      "method": "generated"
+    },
+    "room/light1": {
+      "rect": [
+        160,
+        2,
+        22,
+        42
+      ],
+      "anchor": [
+        11,
+        40
+      ],
+      "source": "sprites/room/light1.png",
+      "master": "assets\\rework\\masters\\room\\light1.png",
+      "method": "generated"
+    },
+    "room/light2": {
+      "rect": [
+        280,
+        220,
+        9,
+        15
+      ],
+      "anchor": [
+        4,
+        13
+      ],
+      "source": "sprites/room/light2.png",
+      "master": "assets\\rework\\masters\\room\\light2.png",
+      "method": "generated"
+    },
+    "room/light3": {
+      "rect": [
+        436,
+        261,
+        3,
+        5
+      ],
+      "anchor": [
+        1,
+        3
+      ],
+      "source": "sprites/room/light3.png",
+      "master": "assets\\rework\\masters\\room\\light3.png",
+      "method": "generated"
+    },
+    "room/light4": {
+      "rect": [
+        306,
+        261,
+        9,
+        11
+      ],
+      "anchor": [
+        4,
+        9
+      ],
+      "source": "sprites/room/light4.png",
+      "master": "assets\\rework\\masters\\room\\light4.png",
+      "method": "generated"
+    },
+    "room/window1": {
+      "rect": [
+        422,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/room/window1.png",
+      "master": "assets\\rework\\masters\\room\\window1.png",
+      "method": "generated"
+    },
+    "room/window2": {
+      "rect": [
+        448,
+        62,
+        24,
+        34
+      ],
+      "anchor": [
+        12,
+        32
+      ],
+      "source": "sprites/room/window2.png",
+      "master": "assets\\rework\\masters\\room\\window2.png",
+      "method": "generated"
+    },
+    "room/doormat": {
+      "rect": [
+        451,
+        220,
+        36,
+        14
+      ],
+      "anchor": [
+        18,
+        12
+      ],
+      "source": "sprites/room/doormat.png",
+      "master": "assets\\rework\\masters\\room\\doormat.png",
+      "method": "generated"
+    },
+    "room/open_sign": {
+      "rect": [
+        335,
+        261,
+        14,
+        10
+      ],
+      "anchor": [
+        7,
+        8
+      ],
+      "source": "sprites/room/open_sign.png",
+      "master": "assets\\rework\\masters\\room\\open_sign.png",
+      "method": "generated"
+    },
+    "room/bread_bag": {
+      "rect": [
+        489,
+        220,
+        10,
+        13
+      ],
+      "anchor": [
+        5,
+        11
+      ],
+      "source": "sprites/room/bread_bag.png",
+      "master": "assets\\rework\\masters\\room\\bread_bag.png",
+      "method": "generated"
+    },
+    "room/tip_jar": {
+      "rect": [
+        2,
+        246,
+        10,
+        13
+      ],
+      "anchor": [
+        5,
+        11
+      ],
+      "source": "sprites/room/tip_jar.png",
+      "master": "assets\\rework\\masters\\room\\tip_jar.png",
+      "method": "generated"
+    }
+  },
+  "rare_display_names": {
+    "chiikawa": "밀크빈",
+    "usagi": "버터홉",
+    "hachiware": "블루번",
+    "kitty": "리본캣",
+    "melody": "로즈번",
+    "kuromi": "코코뱃",
+    "cinna": "클라우드퍼프",
+    "purin": "푸딩스카우트",
+    "ganadi": "크림독",
+    "loopy": "베리오터",
+    "ryan": "허니베어",
+    "apeach": "피치버드",
+    "pororo": "고글퍼프",
+    "pikachu": "스파크스쿼럴",
+    "chunsik": "펌킨캣"
+  },
+  "family_naming": {
+    "group_names": [
+      "진예가족",
+      "미예언니가족",
+      "지현가족",
+      "배지가족",
+      "도경가족",
+      "지영가족"
+    ],
+    "display": "group_name_only",
+    "appearance_assignment": "independent_of_group_name",
+    "member_roles": false
+  },
+  "source_sha256": {
+    "player/base/short": "f678b0a68489dbbec3fbf4d7fe15d4709e3c0f0ec733cd2048cb4ed0179e0ee9",
+    "player/base/bob": "169f5de71f25eb7abdcd4305ec67cfbb7784480211887618cc108e447e246954",
+    "player/base/pony": "430106944eed66cc85ec2e4c88f22410c1af8dc7b6dc9b4e47d18aa204459537",
+    "player/base/twin": "01fbc9db050d5066dc96c763bd4d56f4c5df788b1e877501103ee686356e9cbc",
+    "player/base/bun": "d60e769ed3dec9df2d767590b796ee89194c4333c1caa6b3a453979e0e5b34db",
+    "player/base/curly": "8f2659b7739068a10923563cb80e292f9fd6cb2da92f4e374736bdac555a00d1",
+    "player/base/long": "5e2b344c495ec199f27a3cccca694cd29a8e1ca62310f07c688df4ca0e88a4a5",
+    "player/outfit/tee": "2433b57b78025eefdd26b313c43969d220394ec2f5e6e0b2443656242e5fa2ee",
+    "player/outfit/apron": "12310871266b1cbbb217478a1fc468f6095936e6c0b609eeebf7fb5c09b326ed",
+    "player/outfit/stripe": "f546fb46ad66bb820dc4b4d178e4946825faece1e0dfc4e96930c3cd838f6d99",
+    "player/outfit/overall": "74b27693bb0b8041fc7b382f2896d349bb2ef35f303b77d11c4b76bb96e7babd",
+    "player/outfit/pat": "d9d04c287c2eaec487805f44a950fa492ce021c59ec54dfbe8d26e98157c0ebb",
+    "player/outfit/hood": "26a48ac95216276c69cad14a0706d0077569ad3fed1b801cc8a4f4c678945309",
+    "player/outfit/chef": "98a4cde69a115714080facaed27034e38ad08f49369e965a7e0ab888e15fead9",
+    "player/accessory/glasses": "fe997b584c8a22ab887b0fbbddcf905da4010951d32a66192dbe619473c12020",
+    "player/accessory/ribbon": "93e84a3224ef63be4ec3d47e064ecec136eab46d78d487f7d725ad4a746675d6",
+    "player/accessory/beret": "fd9cdc7ace220ee17f2700bbc18e242e3a16c5a3234e3a4172599c6c696cccf1",
+    "player/accessory/scarf": "1abea29c8b3af6001116a888fd020b05f09cf4fd05724b604fbd413f9878ada4",
+    "player/accessory/sunglass": "4cb5092d90d31ccf8d60ecffc12fea5791e935d047d923508b8f8090b6761ea6",
+    "player/accessory/crown": "891452b446a5ff19c3d8564819c0dbc17d29346d1724416cc315d096f5f0d320",
+    "player/accessory/toque": "941c3591c71433e7e48c84f29472c521e8e816b00e537a749475ec82d2e26458",
+    "animal/cat/0": "4289186d390d3f02ff1b376ef46394436409c23dda08fe0f3e50182ecf77f28e",
+    "animal/cat/1": "b9eb7257ee1e07af48f98ec1a1e21bddda0851228df8f3f841662670384746f5",
+    "animal/cat/2": "97ff67c76c8574616b3b9b01f7a9b0ae562e29679ba37134976830c634aad0bc",
+    "animal/cat/3": "7fdf39b935ad128bcf701e57bc7a74769541110ea7645fae295fad78979a6295",
+    "animal/dog/0": "d6c6acf6a318b72aac4f6306e070365f36e28fe9b1b5e19939f785be454a400d",
+    "animal/dog/1": "4a056081430bc20fc9cac664b84ab8c67266b32398b8b35c7e5df28a1b064332",
+    "animal/dog/2": "9805226c34fd4eacf68f5d52898b1076335e32b864a5ff12792c30f62144dd85",
+    "animal/dog/3": "80b629a57fef9bf6e7655064847f85918b1970bc6cb9435b15c1860a4f3ac8a2",
+    "animal/rabbit/0": "33e4fa273fa1c69a672721bbbcc8b64eee2f922030f315518707996649ffadd1",
+    "animal/rabbit/1": "931cb8b6c5ac5224640e96db68326e2f20b9311bc6cd8c19ae703dfb97fca0b7",
+    "animal/rabbit/2": "d9bc837a5a114eae412b6bc5f76e5961dc939624cd2735aa6162dbfdd3a83918",
+    "animal/bear/0": "9de9760f8b7b4f8312efa54be32e6c102b776cd2c9bdd996389a47cd1635e6dc",
+    "animal/bear/1": "0b17e58da01c716c5864d96ffe44a6b5a1f0270291d723a39199fed8db005969",
+    "animal/bear/2": "2090b8816ac30cc5bf971c5a52793af106c78b51e0f524c6b680311f4e43fdc6",
+    "animal/hamster/0": "07a09632266f45d8c4f8fe8c3b43797eb23f8762001c1d403f2b5cd52cd1f465",
+    "animal/hamster/1": "fb34768e0654effde685ad9c20b1a351e5989bcc038136a376a2c556d3037ff6",
+    "animal/hamster/2": "309608c2109bdb83a02b3fa9d82b13fc57b9d8dcd2d85d8f28255863fba58711",
+    "animal/fox/0": "28c0f6bd7b8f1d1de30373524b2cbaac649eb0a77c14a850c402afb46a5bae12",
+    "animal/fox/1": "ac1fb4ff89d323f5a6a8366c9acdbdc41434f8e6052377f04e04ba5aaf9b9ca3",
+    "animal/mouse/0": "a2b1e4a1dba8d1c170cbd853d08bf5731db735509d8b1359ddb30204d510f850",
+    "animal/mouse/1": "7a33bc6b6394c7ecda428fc9e0d11852b3aa9b28ea71f4c98c82c8888014046e",
+    "animal/mouse/2": "9f8fada4d1b43fee986d1f0f0ba8e55c7a01e4e34f8c1b5fc56b09f017f40377",
+    "staff/apprentice": "bdf833f362c9e425713c77d383c420ec3351fae9dad4e6f5ab33c089f2c2d8c9",
+    "staff/clerk": "da78aae1d0553d08c12698d53db65cb08c632fc635166b7f8bace7dd9cc719dd",
+    "staff/barista": "234597b8f4a38cf932c1ab0801a27a68d03a76fa22b629345209d37e75729c5b",
+    "staff/patissier": "d0f1b8fa7ad2d2d3a10b68065f2f26babdc3386c228b7accd3a05e214d6cd914",
+    "staff/rider": "a5109c3025de8b064d7b809f7bad193053fb301f1d8b8b46131f0854dec45bf5",
+    "staff/chef": "ee95da91ce582773ba54373b6de4f636a3c4236193a6acecf831b5111e5163f7",
+    "family/variant01": "466523b1759725da0d551d49e53c8325d4ebd7f21d1bf24664f992a32a11629a",
+    "family/variant02": "25b3fac5b24cd4feb13bf0e6410b0e42fa33e8ad0fe17c9c19a1c84936cd5a4c",
+    "family/variant03": "c15646fe016f08f02969b38023c77f42af30702a1e60d3466c99027603822277",
+    "family/variant04": "6447d4510483f7e3c6bc90cff9fe216e5b179de067655b52281100950abd03fa",
+    "family/variant05": "13397566802b3e26dca66e7d92d15ee0337e2df6b446f3ed507ce4d918f7c7c5",
+    "family/variant06": "0bec070ee122541535071dcf0c023383a2adb797070eaa4fa1eed2c6aa750bd4",
+    "family/variant07": "4df706ea6aa9bfe14b4d443b87be102b5e204dfdf01d297cb9d04749c81e0610",
+    "family/variant08": "b4735c5df00c173105f3442ce1596bd5cc74dd6dc25b4b92f7795573184a5b98",
+    "family/variant09": "11c7fa60855e35036245b4834e3253b6d2e908ebffc94928d1c393bb4902b7a4",
+    "rare/chiikawa": "6d423e5e0d30d2686ceb19f74d321b23e115ec10f6050d0da1f8ede5c6c3d270",
+    "rare/usagi": "65b9455679bced79aad0176ac4a05ea40bdb5a6cc0b10c2c3beaf4e1e11fa32f",
+    "rare/hachiware": "40ab211ed51ae1518f524bb56ce8591a11d6420bf52f0b0f85c7cb89a24ddec5",
+    "rare/kitty": "0eb02863d644bdf18b8fd028ba8616d42f400423750b521b9323b66fbb9ecd4c",
+    "rare/melody": "597268e5ddbcaba2ccf25b7d53a9751aaad8e387421b8e74cbb9cfbd7bf9090a",
+    "rare/kuromi": "0fe28b8222e1c798d5966254c00fc8a768746a1ec0df16fed3706f957e7739ff",
+    "rare/cinna": "0717393f40c35dc2ffc3a40e7880a6afb4fe661367090ba063ea1b679ce801a8",
+    "rare/purin": "ca7d2571e039d5c27ee9432632b5e317688d67ee5e4d3c1b7219fa4f8b2d2ba6",
+    "rare/ganadi": "0d9868e25d8f7647177304488f9ec89c5b662d7f5abf7c5e64b6bd4906d41d8f",
+    "rare/loopy": "82b1bd905f82dff2b37eeedaf82a4d5d874fe63e0cab0ff501a19b960679d495",
+    "rare/ryan": "21a6b17c7d69de758de78617d861c6429597dd139335934131baa8b61584ec9f",
+    "rare/apeach": "8c3f446e4e2586732eb7be459aa7af650df170c59ac023d156901408d4b82b3d",
+    "rare/pororo": "d64fbd7caa69884c434d9f738e5bc198276cf1c6cb24487306279f5c95c36caa",
+    "rare/pikachu": "8d3d6e57859f5f4f25005c1224fa72c1884f7cc6a49a544388edb60d7d859223",
+    "rare/chunsik": "1b06ff477ece97ad8021ebd0818b80b773196f0b023b5606f280122a3d9d9321",
+    "food/bread": "d6465c5819ff8a5c19ad55a3b0c399156622cc0265b99da9141c5d99024c585e",
+    "food/roll": "34734ccf35bed8caa8d2cd9a31b012c8676ed5dff5c0e0c31fb7a79ed3497c92",
+    "food/soboro": "495e53d6bf11cfbe41b10f7016a6fa0881c6c6997c5b930b6437244e49fdd9f4",
+    "food/redbean": "2e3416766d1cb87273e4300acce827bb6cedebc9780eba9bd6980a646c9c1e2a",
+    "food/cream": "fa498c3ce61b4a56fe52de4406ad2bbfc8c0772c5e6889c5009690f578912318",
+    "food/salt": "47c13371f5fa605ecc6079658600b7cff159b7f84092b3df9c648f0e9466519c",
+    "food/croissant": "5d8806387c62e4c5249c175ae0eb03de64c92958636719613d2a10ef8bb70882",
+    "food/baguette": "522698556e7a840878beb1875870f536038d5b7f26fa1515a1e1c723c28754f6",
+    "food/madeleine": "fd06de3d2fc7fafaf4f78a583d36516f6ddec75b605e68123fa4096b3ad8c193",
+    "food/tart": "5d8babf2e3516b931e5347ee49edc887022e77d421d7dc10ac88c5c647e3a708",
+    "food/macaron": "1d3cbdaadd39cc460a1a09db40dfe0a31c8ae0a4c6986dcc5abc385535413416",
+    "food/cake": "502e135d4c70f2c1df7b6f6be2d410dd50be55c657bec120e1f89c3f4202b601",
+    "food/strawberry": "75ac17e7beab56540699adee983acc955f0c179b681a76ae145b3c37e7ae9eea",
+    "food/wedding": "facf0c0ea7c12039b15177ce63d98b4746c5cddd3955c7f8d06d5b2196553fc2",
+    "food/eggtoast": "2065f64d212efbc4a8ac5ee53a178681f55ebbcd6f4b1bcb5ab91a55ff4218cd",
+    "food/pancake": "1a7194f4aef393f8b2d48b508f91a2195f16beaa158aa0295d70f61fd68d99bd",
+    "food/frenchtoast": "d2e123c425976d2a9cbe4e482386578089a2d0fe950160b7bf53bbd43a68236d",
+    "food/sandwich": "8f7eb2a8c3a5290cfb3eef009146a233e585e6a6a520f76d92f763fd54e96859",
+    "food/omelet": "61aa3ec1ac96f804c10b8f1c0728de0e4ff06356121c210916aa965f93caa60b",
+    "food/benedict": "c1019e8c0223ab4136eace1fbf0f14a6bc1614177425e3332b609d7d3f77a9c0",
+    "food/avotoast": "376f733397a46d539247bfcde3a27b4d91f1d1ae873c9da0f6d11e2369b00c69",
+    "food/brunch": "54fc36b3d3b21a0af375541c1102ccfbe6be19408ff4ce65eea0a484f8eb466e",
+    "food/waffle": "d361d73bc674a4cd98553e21b39aea35fe3589411a8d2bf80c303f6cc9c50ee7",
+    "food/tiramisu": "10bdda0e33e9f4c206d5763e0fea76da44a00878da887857afb7c82a4e586a55",
+    "food/latte": "dc1374a0a9b3ac987e3fe4e771f7c9af5427d855a4bcabf0028a70bac4e6b0c9",
+    "food/burger": "f109a59d9a04fea91294a08d89e2212fd7175450a1737d4d243d7cd73a74e53d",
+    "food/pizza": "ee2cbbe64937e4c26166083d10d53dae0f419be2fb84cb2d4d939a875c841cdd",
+    "food/juice": "ce46b7e071d3ce0f3e1d94b62df4f08a463d6a439fd1feaba02bd749c29092d2",
+    "food/garlic": "c09a3e8030ffbf44ec58303c6115946aba05c11721bc8e4be75ee08f3e68380c",
+    "food/bagel": "6ef6d26970533946436b1456d4bdf03359967721ea1e4e0b7045b11246223ced",
+    "food/pretzel": "b871d959f9bc49c397faeb5382140f8e840cad7303d746bc812ff75cfb66f69b",
+    "food/rye": "0dff727a59e7a3b809a0e97eaee0ede71ce763fd8bf36de88eeab9251b5f262c",
+    "food/muffin": "e74ffdde21819565ece37b2f966bd331e41889922a037868e170e17f868f23b0",
+    "food/mocha": "efaa83331bceb7a029bec4c53984fb3f02c84aca8eab6f33bc640290edbcea34",
+    "food/focaccia": "ccd35732db7ebe112eccabaf673e4825ac5afefb999e241b96e3847dd7c7f6ab",
+    "food/sausage": "44fb1c5163cbee51ced77ab23f8a6f5cafc7c4d372a89a1f322b22815a2ee0ae",
+    "food/brioche": "ebb2c6ca5009541663c1492abe69d229d43ee56d42d319811f193d17959898a6",
+    "food/creampuff": "f5c88216ae2d2cd2321bdec357148e1c01d752b823e76ba344a7ecec4ff9beda",
+    "food/cinnamon": "d07647715244a37b0e9d0d5ba5f1ae775dbc1c0ca80f42a4ffa0b783bc5c4b92",
+    "food/eclair": "1bdf0d72c062742849f17cc886a5528a7ab4ed2cd99685eb2a657b60eaf3a35e",
+    "food/applepie": "85e771a63ff330567b4bbd25845047043ff8004e1b3ccdf58bcf9501f7bf57d5",
+    "food/castella": "eb97f744d149a1b5b5221b39b7b5c1959d9c3dfb2088bca8133f5a519b4b1206",
+    "food/kkwabaegi": "7eac5dd1986fe97932c947d3e0fc4204896f0d2cfd48bd219c52ac3daa6011cd",
+    "food/anbutter": "17ab2e2ccdf2ab0a287c270a2417c760312c417d40e44b6f7bab56419d543ec1",
+    "food/donut": "dee2bcaf060510bf2ff53b19c97ff1c06f6ee0cd74c8709902038a69515efb63",
+    "food/painauchoc": "0994dee47fb4dcd5c4fe44b7860b7f707be120241c28dc3aa67d53ef930356d2",
+    "food/scone": "a7e8658a04113ebf5306b980a5f0a160fb41f74e49b3e6aa4a0cb51677fc1df7",
+    "food/financier": "82ce47d3265e9ddd8d83657b3c9b13d502fd748eae89cf0f55d29a61b41e4a17",
+    "food/ciabatta": "0f10a438c38360dd3b7129ca13aa5aca1b1578d544f23fe2e3f7b3db1b8ba428",
+    "food/campagne": "5bf5e116ed322e379c0a94d5f7fce042b9b957e35f2e8d17e0e7574e9477a49f",
+    "furniture/stand1": "5e35c96c8cc4a44c6249bbd82289b3c547cc1b11bbb51bd4c6abd3c884d50992",
+    "furniture/stand3": "f842c577295f0fedb72f82144abe943d6dcafc5d68e32a0238a9625930b7c518",
+    "furniture/stand4": "c32869fe91dc4927c4e34ad1ce194c02626cf4a96b7b1d0521a025ebdabff57c",
+    "furniture/stand6": "c985c28e442f52069df2f750f3973c6347ae355500fa3b48df53922a1a5ba66a",
+    "furniture/counter1": "935b6d06d04b8563492648d3fb72cae6c19dbf59c85f091cf1841c37e0536383",
+    "furniture/counter2": "11d166258131eb165bad07338caae5502385e8c7ffc93b74420d9480c89e5919",
+    "furniture/counter3": "cc183fc76130115668fb33bc5717d4128df8eaeb789358d7756a387686285f99",
+    "furniture/oven1": "d9f04c463db8a197a79a293152e1cec054a2e3bcb1efd8a7410d240e3d1f4135",
+    "furniture/oven2": "daa74d62ac6a51018d589b107087090193c53067c6d3da936b49c013bf22e774",
+    "furniture/oven3": "a5e7de2cdd7a9409a910b56b6e4f3a6fc1a52fac5d86250e67579b013f19d8c2",
+    "furniture/oven4": "24496f2f97a4b0dc553ee0d413c6b9e7e30f724f0c7047cbd83167222a22a57b",
+    "furniture/tableL1": "4946c61b668ca2d8afecbe78d11bb01bc4ae0ccca6586846a5b63b7c29b4a136",
+    "furniture/tableL2": "7d1ed8559678f8877987aa8835d48a0bc3b304b0282d02e7dcf534ab5ddce878",
+    "furniture/tableR1": "c4f8b0150776bac70348dd573370b311ca3071679ddacae37469e8a29ce3dcc1",
+    "furniture/tableR2": "59b4d2f2e46c9f5b40f7b39e398620b69d3cb0eb04c48c8c261acb07487dd2fa",
+    "furniture/plant1": "12008253536fffc3a80c0deb7ca5b378e359ba68a814429a8d419b62a9afdefb",
+    "furniture/plant2": "d821265e7bcc385ac7931d6b0cc5e3fe73854762b314616076f3e6241f0f81d3",
+    "furniture/record": "c1c8a40d8550280ee46cb81f481b41fcfc126262eaef813bda86ac0fa8e1c44c",
+    "furniture/catbed": "bdccffea76821eabf0ae3e4a67798f191ed92cce4e829cec032f68e2a4b99ad8",
+    "furniture/coffee": "9ef77fcbd4363e0b975ee0c2bcf22890ce531c9a47d6467eca29552965fdfb65",
+    "furniture/shelf": "d3476ee442c2398379c395884e7fa2c877256a27ede4de274249c5f625ac021b",
+    "room/wall1": "dfb55a2bde34bb195535f62e945654f9be79d0fe595ac929710fa93288e3836f",
+    "room/wall2": "bcfc8fa1865e48ab591d1cda2829949bf74ca08eafdd09b479a3a0265950bcd1",
+    "room/wall3": "8d9e3878e6f7157d1e51e5b5f2bf0e7f66c4f9729071a6f7416f56d346e19197",
+    "room/wall4": "d30e85664342d3038885a7ed084f4c3191ff86f08913f423a50fdab7b81be000",
+    "room/wall5": "38390f44026875c9d77aeac0270c84a9986cd296473926cb920dab4c9468b979",
+    "room/floor1": "caf1fbc3d1f833ed100b3413eb29169c4369eccdad03414d9defd02965d999d0",
+    "room/floor2": "731270b88413ef65093ed2b822ebc60156fa6661d0bad7d281d5b28af9f32b77",
+    "room/floor3": "594527c837af51eb990ff6ae5c76e67e78eef9fd845d3a6bc410990270edb945",
+    "room/floor4": "8bc6b0ba58874160ad6ceb6217e728ed48ed6813cc9bc52ce5ef9790ad35828c",
+    "room/floor5": "1fc1d1774546b193319774fcb7b87015ad168e27fff6cc774b76b620c9761010",
+    "room/sign1": "88cdedd9d9af7ea82eeccfae49b55a95a1e57479051b9c124aa5cb90c6935f52",
+    "room/sign2": "e11b183148a125a23c2a95c92ca8df3bd77fb94de37a8041e3b8bad62be2d82a",
+    "room/sign3": "8631bae9f81abcc14995d5e9d784566983fbbf0f26686a20681ed72bfa0f9672",
+    "room/sign4": "2dccbaba916f9b018e502489c3e15105d4e66aaf1557928119c27fb3f5b90713",
+    "room/light1": "27a5248e892fe3f06930432c48f30ad18e22b0a35a5f084987b7b74a5eee7d21",
+    "room/light2": "51c60e6513339bfcebc8b8b50484b9671506ac6e739b5a44b4f126cdf62a8ab1",
+    "room/light3": "2da265791a7be17531642e264db1c23a03dbf6359dd26db56c465d698af965a0",
+    "room/light4": "1e3cc9df51f8ab701608fa8d5e60042484cfa3981ff684c3eb581015f336b106",
+    "room/window1": "fb0f1761d83b35ee65508105c5a1cff109652b158a93e870cbae56743d7d7fe7",
+    "room/window2": "170f0a3205865b2648fa40d222d36fad8fee5e4350f298de1a0cd0dbbb7c5fc1",
+    "room/doormat": "93c213d8d60de6ea0a3d169360cb4082e6c32ed30806f891757b68389e3c511a",
+    "room/open_sign": "6aae498aa23d5b413564b284b1b182f75afd69c27798cb5bb458297337c47b0b",
+    "room/bread_bag": "d1fd81cf8abb8a724225f512ca06ceb6d9accf429f6ec6f52b0aa2da9be58157",
+    "room/tip_jar": "75031d8022048de62047acc5b806ac8597ce97fb5ba3d1494bdcd935e8a515ce"
+  },
+  "variants": {
+    "2x": {
+      "atlas": "pixelcafe-atlas-2x.png",
+      "scale": 2,
+      "size": [
+        1024,
+        576
+      ],
+      "native_detail": true,
+      "png_bytes": 392920,
+      "decoded_rgba_bytes": 2359296
+    },
+    "3x": {
+      "atlas": "pixelcafe-atlas-3x.png",
+      "scale": 3,
+      "size": [
+        1536,
+        864
+      ],
+      "native_detail": true,
+      "png_bytes": 705615,
+      "decoded_rgba_bytes": 5308416
+    }
+  },
+  "stats": {
+    "sprites": 168,
+    "png_bytes": 127529,
+    "decoded_rgba_bytes": 589824,
+    "unique_colors": 129
+  },
+  "rendering": {
+    "logical_scene": [
+      320,
+      208
+    ],
+    "native_scales": [
+      2,
+      3
+    ],
+    "method": "independent masters sampled directly at display density",
+    "retained_exception": "rare/pikachu"
+  },
+  "art_direction": "concept-01: rounded minimal faces; rustic wood furniture",
+  "staff_art": {
+    "version": 2,
+    "style": "animal cafe staff",
+    "species": {
+      "apprentice": "hamster",
+      "clerk": "rabbit",
+      "barista": "mouse",
+      "patissier": "cat",
+      "rider": "fox",
+      "chef": "bear"
+    }
+  }
+}

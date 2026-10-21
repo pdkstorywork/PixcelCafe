@@ -1,0 +1,18 @@
+# Recovered root-level .pyc files are required runtime sources; keep them tracked.
+__pycache__/
+*.bak
+*.tmp
+
+# Build and verification output.
+/build/
+/dist/
+/.verify-runtime/
+/.*-build/
+/data-test-*/
+/game-data-test-*/
+/data-smoke-*/
+/exe-data-test-*/
+
+# Local asset previews.
+/*-size-check.png
+/summer-outfit-preview.png
