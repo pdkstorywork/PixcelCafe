@@ -9,9 +9,16 @@ from game_data import read_save, write_save
 import time
 
 SALES_PER_LEVEL = 12         # Lv1->2 needs this much sales credit
-LEVEL_EXP = 1.5              # target = SALES_PER_LEVEL * level ** LEVEL_EXP
+LEVEL_EXP = 3.0              # target = SALES_PER_LEVEL * level ** LEVEL_EXP
 SHARE_CREDIT = 0.12          # every other unlocked bread learns a bit from each sale
-LEVEL_PRICE = 0.06           # each bread level adds this share of the base price
+LEVEL_PRICE = 0.2            # first level-up adds this share of the base price
+LEVEL_CURVE = 0.7            # <1: each further level adds less than the one before (diminishing returns)
+# ---- Sale time: now and then a crowd (3~5 guests) rushes in together ----
+SALE_CHECK_SEC = 60          # every minute the cafe rolls for a sale time
+SALE_CHANCE = 0.15           # 15% per roll -> about once every 6~7 minutes
+SALE_GUESTS = (3, 5)         # guests that rush in, inclusive range
+SALE_GUEST_GAP = 1.0         # seconds between the rushing guests
+
 STAFF_WORK_STEP = 30 * 60    # seconds of work per staff level, times current level
 
 # ---- Recipes unlock automatically by cafe day (calendar days since first run) ----
@@ -54,10 +61,18 @@ def unlock_day(index, last_index=49):
 MAX_GOLD = 10000      # top of the old recipe-price curve (used only as a position scale)
 COST_SCALE = 10.0       # first employee 500G; final employee 9,500G
 COST_CAP = 3000000
+# Guests arrive 5x as often (SPAWN_GAP 120s -> 24s), so purchases are repriced:
+# furniture most of all (the cheapest way to buy bonus), the rest a bit less.
+COST_UNIT = 0.1        # whole shop is priced at 1/10 of the old gold scale
+FURN_COST_MULT = 330.0
+SHOP_COST_MULT = 165.0  # staff, stands, interior, hero outfits
 BUY_FIRST = 30        # position scale start
-SELL_FIRST = 15       # sale price of the free starter recipe at Lv.1
-SELL_GROWTH = 1.04      # later recipes remain worthwhile beside leveled starter breads
-BONUS_SCALE = 0.2     # shop/staff income bonuses; stacked at full they gave x11.7 and flooded the late game
+SELL_FIRST = 5        # starter bread price at Lv.1; 5G x 20% = +1G per early level, so every level-up shows
+SELL_GROWTH = 1.01      # later recipes remain worthwhile beside leveled starter breads
+BONUS_SCALE = 0.08    # shop/staff income bonuses; stacked at full they gave x11.7 and flooded the late game
+
+
+EARLY_FURN_COST = (250.0, 500.0)   # the two cheapest base furniture pieces stay quick to buy
 
 
 def nice_number(value):
@@ -69,8 +84,14 @@ def nice_number(value):
     return float(round(value / step) * step)
 
 
+def shop_price(value):
+    """Shop prices in clean steps: 50G below 1,000G, 100G below 10,000G, then 500G (min 50G)."""
+    step = 50 if value < 1000 else 100 if value < 10000 else 500
+    return float(max(50, round(value / step) * step))
+
+
 def _nice(value):
-    return min(float(COST_CAP), nice_number(value))
+    return min(float(COST_CAP), shop_price(value))
 
 
 def shrink_bonuses(cafe):
@@ -97,7 +118,7 @@ def rebalance(cafe):
     def curve(pos):
         return BUY_FIRST * (MAX_GOLD / BUY_FIRST) ** ((pos - 1) / (last - 1))
 
-    def remap(cost):
+    def remap(cost, mult=SHOP_COST_MULT):
         if not cost or cost <= 0:
             return cost
         pos = 1.0
@@ -111,14 +132,14 @@ def rebalance(cafe):
                     break
             else:
                 pos = float(last)
-        return _nice(curve(pos) * COST_SCALE)
+        return _nice(curve(pos) * COST_SCALE * mult * COST_UNIT)
 
     for i, recipe in enumerate(recipes):
         recipe['unlock_day'] = unlock_day(i, last)
         recipe['cond'] = unlock_condition(i) if i else None
         recipe['buy'] = 0
         sell = SELL_FIRST * SELL_GROWTH ** i
-        recipe['sell'] = round(sell)       # whole gold only
+        recipe['sell'] = max(1, round(sell))    # whole gold only
         recipe['inc'] = sell / cafe.SELL_K
         recipe['upg'] = 0
     for staff in cafe.STAFF:
@@ -126,13 +147,16 @@ def rebalance(cafe):
     for stand in cafe.STANDS:
         stand['cost'] = remap(stand['cost'])
     for item in cafe.FURN:
-        item['cost'] = remap(item['cost'])
+        item['cost'] = remap(item['cost'], FURN_COST_MULT)
     for group in cafe.INTERIOR.values():
         for item in group:
             item['cost'] = remap(item['cost'])
     for group in cafe.HERO.values():
         for item in group:
             item['cost'] = remap(item['cost'])
+    paid = sorted((item for item in cafe.FURN if item['cost'] > 0), key=lambda item: item['cost'])
+    for item, cost in zip(paid, EARLY_FURN_COST):
+        item['cost'] = cost
     shrink_bonuses(cafe)
     for key, cost in list(cafe.LEGACY_STANDS.items()):
         cafe.LEGACY_STANDS[key] = remap(cost)
@@ -162,12 +186,20 @@ GOLD_CAP = 9999999           # money and totals stop at 999만 9,999G
 
 
 def gold(value):
-    """Whole gold only, e.g. 1,730G / 7만 4,000G / 999만 9,999G. No decimals, never 억 (cap 999만 9,999G)."""
+    """Short gold text, e.g. 1,730G / 1.05만G / 7.4만G / 52.3만G / 999.9만G (cap 999만 9,999G, never 억).
+
+    From 1만 up the figure is shown in 만 with at most 2 decimals below 10만 (so 500G steps stay exact)
+    and 1 decimal from 10만; extra digits are cut, never rounded up.
+    """
     n = min(GOLD_CAP, int(round(value)))
     sign, n = ('-', -n) if n < 0 else ('', n)
-    if n >= 10000:
-        return f'{sign}{n // 10000:,}만' + (f' {n % 10000:,}' if n % 10000 else '') + 'G'
-    return f'{sign}{n:,}G'
+    if n < 10000:
+        return f'{sign}{n:,}G'
+    if n < 100000:
+        text = f'{n // 100 / 100:.2f}'.rstrip('0').rstrip('.')
+    else:
+        text = f'{n // 1000 / 10:.1f}'.rstrip('0').rstrip('.')
+    return f'{sign}{text}만G'
 
 
 def install(cafe):
@@ -190,7 +222,10 @@ def install(cafe):
     def tip(self, *args, **kwargs):
         before, total = self.money, self.total
         original_tip(self, *args, **kwargs)
-        whole = max(1, round(self.money - before))
+        # the original floors a tip at 1G, which is huge at the small gold scale: recompute it and
+        # round up or down at random so tips stay whole gold without inflating income
+        amt = self.inc / self.guest_speed * cafe.SPAWN_GAP * cafe.TIP_RATE
+        whole = int(amt) + (cafe.random.random() < amt - int(amt))
         self.money, self.total = before + whole, total + whole
 
     def init(self):
@@ -233,7 +268,7 @@ def install(cafe):
 
     def price(self, recipe):
         level = max(1, self.rlv[recipe['id']])
-        return recipe['sell'] * (1 + LEVEL_PRICE * (level - 1)) * self.mult
+        return recipe['sell'] * (1 + LEVEL_PRICE * (level - 1) ** LEVEL_CURVE) * self.mult
 
     def day(self):
         return max(1, int((cafe.time.time() - self.start_time) // 86400) + 1)
@@ -315,8 +350,30 @@ def install(cafe):
             self.disp[sid][k] = breads[i] if i < len(breads) else None
         self.recalc()
 
+    def sale_time(self, dt):
+        if not 0 < dt <= 1.0:
+            return
+        left = getattr(self, 'sale_left', 0)
+        if left > 0:
+            self.sale_gap = getattr(self, 'sale_gap', 0.0) - dt
+            if self.sale_gap <= 0:
+                self.sale_gap = SALE_GUEST_GAP
+                plan = self.make_plan()
+                if plan:
+                    self.spawn_customer(plan)
+                self.sale_left = left - 1
+            return
+        self.sale_roll = getattr(self, 'sale_roll', 0.0) + dt
+        if self.sale_roll >= SALE_CHECK_SEC:
+            self.sale_roll = 0.0
+            if cafe.random.random() < SALE_CHANCE:
+                self.sale_left = cafe.random.randint(*SALE_GUESTS)
+                self.sale_gap = 0.0
+                self.toast(f"세일타임! 손님 {self.sale_left}명이 우르르 몰려와요!")
+
     def update(self, dt):
         original_update(self, dt)
+        sale_time(self, dt)
         self.money = min(self.money, GOLD_CAP)
         self._unlock_check += dt
         if self._unlock_check >= 1.0:
@@ -409,20 +466,20 @@ def install(cafe):
                 rid, level = recipe['id'], g.rlv[recipe['id']]
                 if level > 0:
                     result.append(dict(kind='recipe', id=rid,
-                        name=f"{recipe['name']}  Lv.{level}",
-                        sub=f"판매가 {cafe.fmt(g.price(recipe))} · 판매하면 자동 성장",
-                        price=f"판매 {int(g.recipe_sales[rid])}/{recipe_target(level)}",
+                        name=recipe['name'],
+                        sub=f"판매가 {cafe.fmt(g.price(recipe))}",
+                        price=f"Lv.{level} {int(g.recipe_sales[rid])}/{recipe_target(level)}",
                         ok=False, state='owned', icon=cafe.icon_for('recipe', rid)))
                 elif not next_shown:
                     next_shown = True
                     result.append(dict(kind='recipe', id=rid, name=recipe['name'],
-                        sub=f"해금 조건: {recipe['cond']['text']} (아니면 {recipe['unlock_day']}일차에 자동)",
+                        sub=recipe['cond']['text'], sub2=f"혹은 {recipe['unlock_day']}일차 진행",
                         price=g.cond_progress(index),
                         ok=False, state='locked', icon=cafe.icon_for('recipe', rid)))
                 elif not hidden_shown:
                     hidden_shown = True
                     result.append(dict(kind='none', id=rid, name='???',
-                        sub='조건을 달성하면 자동으로 열려요', price='', ok=False,
+                        sub='???', price='', ok=False,
                         state='hidden', icon=cafe.icon_for('recipe', rid, 'hidden')))
             return result
         if self.tab == 4:
@@ -432,10 +489,10 @@ def install(cafe):
                 if level == 0:
                     price, state = '채용 ' + cafe.fmt(cafe.staff_cost(sd, 0)), 'buy'
                     name = sd['name']
-                    sub = sd['desc'] + ' · 근무하면 자동 성장'
+                    sub = sd['desc']
                 else:
                     name = f"{sd['name']}  Lv.{level}/{sd['max']}"
-                    sub = f"수익 +{int(sd['bonus'] * level * 100)}% · 근무하면 자동 성장"
+                    sub = f"수익 +{int(sd['bonus'] * level * 100)}%"
                     if level >= sd['max']:
                         price, state = '최대 성장', 'max'
                     else:
@@ -461,11 +518,6 @@ def install(cafe):
             original_draw(self, surface, mouse)
         finally:
             self.g.inc /= 60
-        if self.tab == 1:
-            cafe.pygame.draw.rect(surface, (250, 232, 196),
-                (cafe.PANEL_X + 4, cafe.PANEL_Y + 52, cafe.PANEL_W - 8, 36))
-            cafe.text(surface, '판매량에 따라 빵 레벨이 자동으로 올라요', 12,
-                      (110, 76, 52), cafe.PANEL_X + 12, cafe.PANEL_Y + 62, True)
 
     Game.__init__ = init
     Game.tip = tip
@@ -515,3 +567,15 @@ def install(cafe):
             game.inc /= 60
     cafe.draw_mini = draw_mini
     cafe.guest_speed_help = lambda speed: f'손님{speed}배'
+    # fixed guest rate: no x5/x10 buttons. SPAWN_GAP 120s -> 24s equals the old 5x speed
+    # (about 2.5 guests per minute), and only one guest is in the cafe at a time.
+    cafe.SPAWN_GAP = 24.0
+    cafe.MAX_CUST = 1
+    cafe.Game.toggle_guest_speed = lambda self, speed: None
+    _load = cafe.Game.load
+
+    def load(self, *args, **kw):
+        result = _load(self, *args, **kw)
+        self.guest_speed = 1
+        return result
+    cafe.Game.load = load

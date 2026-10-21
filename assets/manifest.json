@@ -1093,7 +1093,12 @@
       ],
       "source": "sprites/rare/pikachu.png",
       "master": "assets\\rework\\masters\\rare\\pikachu.png",
-      "method": "retained-normalized"
+      "method": "reworked-in-place",
+      "rgba_sha256": {
+        "1x": "71ed8117c26394947684b2936225580072c0effcaed54f1cd7ff569555f04c14",
+        "2x": "be75a3d7619cf9896113e315ef2aecdba533ff26c9c7d11418bf8aefe0131984",
+        "3x": "3ac887885fb235ba134c0628e88248441fabceca80f88fced217448a1e525365"
+      }
     },
     "rare/chunsik": {
       "rect": [
@@ -2745,7 +2750,7 @@
         576
       ],
       "native_detail": true,
-      "png_bytes": 392920,
+      "png_bytes": 393016,
       "decoded_rgba_bytes": 2359296
     },
     "3x": {
@@ -2756,15 +2761,15 @@
         864
       ],
       "native_detail": true,
-      "png_bytes": 705615,
+      "png_bytes": 705217,
       "decoded_rgba_bytes": 5308416
     }
   },
   "stats": {
     "sprites": 168,
-    "png_bytes": 127529,
+    "png_bytes": 110463,
     "decoded_rgba_bytes": 589824,
-    "unique_colors": 129
+    "unique_colors": 308
   },
   "rendering": {
     "logical_scene": [
@@ -2775,8 +2780,7 @@
       2,
       3
     ],
-    "method": "independent masters sampled directly at display density",
-    "retained_exception": "rare/pikachu"
+    "method": "independent masters sampled directly at display density"
   },
   "art_direction": "concept-01: rounded minimal faces; rustic wood furniture",
   "staff_art": {

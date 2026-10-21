@@ -171,7 +171,7 @@ def install_recipe_book(cafe):
                     sub = recipe['desc']
                     price = f"해금 완료 · Lv.{level}"
                 else:
-                    sub = '??? · 시간이 지나면 자동으로 열려요'
+                    sub = '???'
                     price = f"{recipe['unlock_day']}일차 해금 (현재 {self.g.day()}일차)"
                 result.append(dict(kind='none', id=rid, name=recipe['name'],
                     sub=sub, price=price, ok=False,
@@ -261,7 +261,7 @@ def install_recipe_book(cafe):
                     rect.centerx, rect.centery, True, 'mc')
             cafe.pygame.draw.rect(surface, (250, 232, 196), (px + 4, py + 52, pw - 8, 36))
             got = sum(level > 0 for level in self.g.rlv.values())
-            cafe.text(surface, f"빵 도감 {got}/{len(cafe.RECIPES)} · 잠긴 빵은 일차에 따라 자동 해금", 12,
+            cafe.text(surface, f"빵 도감 {got}/{len(cafe.RECIPES)}", 12,
                       (110, 76, 52), px + 12, py + 62, True)
         footer(self, surface, mouse)
         if settings:

@@ -34,7 +34,6 @@ mini.install_mini_bar(sys.modules[__name__])
 mini.install_mini_view(sys.modules[__name__])
 mini.install_mini_window(sys.modules[__name__])
 mini.install_monitor2(sys.modules[__name__])
-import tabs_merge as _tabs_merge
-_tabs_merge.install(sys.modules[__name__])
+mini.install_merged_tabs(sys.modules[__name__])
 if __name__ == '__main__':
     main()

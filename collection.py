@@ -44,9 +44,9 @@ PLACEHOLDER = {   # body, belly, accent
 VARIANT_COLOR = {'strawberry': (255, 150, 170), 'choco': (170, 120, 90),
                  'gold': (255, 215, 90), 'rainbow': (200, 170, 255)}
 OCCASIONS = ('spring', 'summer', 'autumn', 'winter', 'newyear', 'valentine', 'halloween', 'christmas')
-OCC_NAME = {'spring': '봄나들이 가족', 'summer': '여름휴가 가족', 'autumn': '단풍놀이 가족',
-            'winter': '겨울나기 가족', 'newyear': '새해맞이 가족', 'valentine': '발렌타인 가족',
-            'halloween': '할로윈 가족', 'christmas': '크리스마스 가족'}
+OCC_NAME = {'spring': '봄나들이 손님', 'summer': '여름휴가 손님', 'autumn': '단풍놀이 손님',
+            'winter': '겨울나기 손님', 'newyear': '새해맞이 손님', 'valentine': '발렌타인 손님',
+            'halloween': '할로윈 손님', 'christmas': '크리스마스 손님'}
 OCC_HINT = {'spring': '3~5월에 방문', 'summer': '6~8월에 방문', 'autumn': '9~11월에 방문',
             'winter': '12~2월에 방문', 'newyear': '1월 1~7일에 방문', 'valentine': '2월 7~14일에 방문',
             'halloween': '10월 24~31일에 방문', 'christmas': '12월 18~26일에 방문'}
@@ -61,8 +61,8 @@ FUR_NAME = {'cat': ('주황', '검정', '흰색', '회색'), 'dog': ('갈색', '
             'mouse': ('파랑', '회색', '분홍')}
 CATS = (('guest', '손님'), ('ach', '업적'))      # companions ('mate') live in the crew tab (cafe.TABS 직원 -> 동료)
 SUBTABS = {'guest': (('normal', '일반'), ('rare', '희귀'), ('family', '가족 손님'), ('legend', '전설')),
-           'mate': (('m_staff', '직원'), ('m_normal', '일반'), ('m_rare', '희귀'), ('m_family', '가족 손님'), ('m_legend', '전설')),
-           'ach': (('ach_list', '달성 목록'), ('ach_skin', '미니바 디자인'))}
+           'mate': (('m_normal', '일반'), ('m_rare', '희귀'), ('m_family', '가족 손님'), ('m_legend', '전설')),
+           'ach': (('ach_list', '달성 목록'), ('ach_skin', '툴바 디자인'))}
 FUSION = {'anbutter', 'eggtoast', 'frenchtoast', 'sandwich', 'avotoast', 'omelet', 'sausage',
           'burger', 'pizza', 'benedict', 'brunch'}   # breads that mix two foods
 
@@ -114,6 +114,12 @@ FAMILY_HINT = {     # guess shown while a named family guest is still undiscover
 # which family each generic look (1-9) belongs to
 FAMILY_LOOKS = {1: '배지가족', 2: '지현가족', 3: '도경가족', 4: '진예가족', 5: '지영가족',
                 6: '미예언니가족', 7: '도경가족', 8: '배지가족', 9: '지현가족'}
+FAMILY_ASSETS = {
+    '도경가족': 'family_dokyeong.png', '배지가족': 'family_baeji.png',
+    '지현가족': 'family_jihyeon.png', '진예가족': 'family_jinye.png',
+    '지영가족': 'family_jiyeong.png',
+    '미예언니가족': 'family_miye.png',
+}
 
 # mini bar designs: unlocked by achievements (colors only, no art needed)
 SKINS = (
@@ -272,7 +278,10 @@ def install(cafe):
             image = cafe.art.walk(base, frame % 3, facing)
             cache[key] = image
             return image
-        base = original_family(appearance, frame, facing)
+        filename = FAMILY_ASSETS.get(FAMILY_LOOKS.get(appearance))
+        base = _load_png(pygame, filename, (24, 34)) if filename else None
+        base = (cafe.art.walk(base, frame % 3, facing) if base is not None
+                else original_family(appearance, frame, facing))
         w, h = base.get_size()
         over = (_load_png(pygame, f'family_{appearance}_{occ}.png', (w, h))
                 or _load_png(pygame, f'family_{occ}.png', (w, h)))
@@ -326,7 +335,7 @@ def install(cafe):
         normals = [f'n_{sp}_{v}' for sp, looks in cafe.SPECIES.items() for v in range(len(looks))]
         groups = [('a_normal', '일반 손님 박사', normals), ('a_rare', '희귀 손님 수집가', list(rare_ids)),
                   ('a_legend', '전설을 만난 자', list(legend_ids)),
-                  ('a_famev', '사계절 가족 앨범', ['fam_' + o for o in OCCASIONS]),
+                  ('a_famev', '사계절 손님 앨범', ['fam_' + o for o in OCCASIONS]),
                   ('a_famname', '가족 이름 대장', ['famn_' + n for n in famnames]),
                   ('a_famlook', '가족 외형 대장', [f'fama_{i}' for i in famlooks])]
         defs = []
@@ -357,7 +366,14 @@ def install(cafe):
     def skin_ok(game, skin):
         return skin['ach'] is None or skin['ach'] in game.col['ach']
 
+    def real_skin(game):
+        skin = SKIN_BY_ID.get(game.col.get('skin'), SKINS[0])
+        return skin if skin_ok(game, skin) else SKINS[0]
+
     def skin_palette(game):
+        shown = SKIN_BY_ID.get(getattr(game, 'skin_preview', None))      # un-confirmed click in the skin list
+        if shown:
+            return shown
         skin = SKIN_BY_ID.get(game.col.get('skin'), SKINS[0])
         return skin if skin_ok(game, skin) else SKINS[0]
 
@@ -386,8 +402,22 @@ def install(cafe):
                        + (f' · 디자인 {skin["name"]}' if skin else ''))
 
     def mate_tier(key):
-        return ('normal' if key.startswith('n_') else 'family' if key.startswith('fam_') else
+        return ('normal' if key.startswith(('n_', 'fam_')) else 'family' if key.startswith('famn_') else
                 'legend' if key in legend_ids else 'rare')
+
+    def fam_look(name):
+        """Generic or named look used to draw a family name (e.g. 도경가족)."""
+        if name in NAMED_FAMILY:
+            return NAMED_FAMILY[name][0]
+        return next((k for k, v in FAMILY_LOOKS.items() if v == name), 1)
+
+    def fam_label(key):
+        return key[5:] if key.startswith('famn_') else OCC_NAME[key[4:]]
+
+    def fam_image(key, frame=0, facing=1):
+        if key.startswith('famn_'):
+            return family_composite(fam_look(key[5:]), frame, facing, occasion())
+        return family_composite(1 + OCCASIONS.index(key[4:]), frame, facing, key[4:])
 
     def mate_lv(col, key):
         return max(1, min(MATE_MAX_LV, col.get('mate_lv', {}).get(key, 1)))
@@ -473,9 +503,7 @@ def install(cafe):
             key = pick_guest(self, ['famn_' + n for n in famnames], 'family_name')
             name = key[5:]
             occ = occasion()
-            count = 1
-            if name not in NAMED_FAMILY and random.randrange(7) == 0:
-                count += random.randint(1, 3)
+            count = 1      # family guests arrive one at a time
             for i in range(count):
                 c = Customer(self, plan if i == 0 else (self.make_plan() or list(plan)), 'family', name)
                 c.tier, c.occ = 'family', occ
@@ -633,19 +661,19 @@ def install(cafe):
 
     def cond(tier, hint=''):
         if tier == 'legend':
-            return f'전설 {pct(LEGEND_P)} · 미발견 손님 우대'
+            return '전설 손님'
         if tier == 'rare':
-            return f'희귀 {pct(cafe.RARE_P)} · 미발견 손님 우대'
+            return '희귀 손님'
         if tier == 'family':
-            return f'등장: {hint} · {pct(cafe.FAMILY_P)} 확률'
-        return '일반 손님 · 미발견 모습 우대'
+            return f'등장: {hint}'
+        return '일반 손님'
 
     def guest_row(game, key, name, image, hint, kind_label, tier='rare'):
         e = game.col['guests'].get(key)
         if not e or e['v'] <= 0:
             if tier in ('rare', 'legend') and key in GUEST_HINT:
                 return dict(kind='none', id=key, name='???', sub=GUEST_HINT[key],
-                            price=f'{kind_label} · 미발견 · {cond(tier)}', ok=False, state='locked',
+                            price=f'{kind_label} · 미발견', ok=False, state='locked',
                             icon=fit(silhouette(image)))
             return dict(kind='none', id=key, name='???', sub=cond(tier, hint), price=f'{kind_label} · 미발견',
                         ok=False, state='locked', icon=fit(silhouette(image)))
@@ -687,15 +715,14 @@ def install(cafe):
 
     def dex_rows(game, sub):
         if sub == 'normal':
-            return normal_rows(game)
+            return [*normal_rows(game), dict(kind='hdr', name='계절·기념일 손님'), *dex_rows(game, 'fam_occasion')]
         if sub in ('rare', 'legend'):
             ids = rare_ids if sub == 'rare' else legend_ids
             label = '희귀 손님' if sub == 'rare' else '전설 손님'
             return [guest_row(game, k, specials.SPECIAL[k], special_surf(k, 0, 1),
                               '', label, sub) for k in ids]
-        if sub == 'family':          # seasonal families, family names and looks share one tab
-            return [dict(kind='hdr', name='계절·기념일 가족'), *dex_rows(game, 'fam_occasion'),
-                    dict(kind='hdr', name='가족 이름'), *dex_rows(game, 'famname'),
+        if sub == 'family':          # family names and looks share one tab
+            return [dict(kind='hdr', name='가족 이름'), *dex_rows(game, 'famname'),
                     dict(kind='hdr', name='가족 외형'), *dex_rows(game, 'famlook')]
         if sub == 'famname':
             return [simple_row(game, 'famn_' + n, n,
@@ -708,7 +735,7 @@ def install(cafe):
                                FAMILY_HINT.get(named_looks[i][0] if i in named_looks else FAMILY_LOOKS.get(i), ''))
                     for i in famlooks]
         return [guest_row(game, 'fam_' + o, OCC_NAME[o], family_composite(1 + i, 0, 1, o),
-                          OCC_HINT[o], '가족 손님', 'family') for i, o in enumerate(OCCASIONS)]
+                          OCC_HINT[o], '일반 손님', 'family') for i, o in enumerate(OCCASIONS)]
 
     def mate_cost(game, tier):
         best = max((original_price(game, r) for r in cafe.RECIPES if game.rlv[r['id']] > 0), default=40)
@@ -718,12 +745,37 @@ def install(cafe):
         """Why this guest cannot be invited yet ('' when every condition is met)."""
         _b, need_lv, _g, need_mates = MATE_RULES[tier]
         e = game.col['guests'].get(key, {})
-        if e.get('lv', 0) < need_lv:
+        if key.startswith('famn_'):      # family names gain no friendship level: visits stand in for it
+            if e.get('v', 0) < STEPS[need_lv - 1]:
+                return f'방문 {STEPS[need_lv - 1]}회 필요 (지금 {e.get("v", 0)}회)'
+        elif e.get('lv', 0) < need_lv:
             return f'우정 Lv.{need_lv} 필요 (지금 Lv.{e.get("lv", 0)} · 방문 {e.get("v", 0)}회)'
         crew = sum(mate_tier(k) in ('rare', 'family') for k in game.col['mates'])
         if crew < need_mates:
             return f'희귀·가족 동료 {need_mates}명 필요 (지금 {crew}명)'
         return ''
+
+    STAFF_GUEST = {'apprentice': '제빵사 손님', 'clerk': '회사원 손님', 'barista': '바리스타 손님', 'rider': '배민 손님',
+                   'patissier': '파티시에 손님', 'chef': '수석 셰프 손님'}
+
+    def staff_rows(game):
+        """The old staff hires, now listed first among the normal guests (hire id 'staff:<sid>')."""
+        rows = []
+        for sd in cafe.STAFF:
+            sid, level = sd['id'], game.staff_n[sd['id']]
+            name = STAFF_GUEST.get(sid, sd['name'])
+            icon = fit(cafe.icon_for('staff', sid))
+            if level == 0:
+                cost = cafe.staff_cost(sd, 0)
+                rows.append(dict(kind='mate', id='staff:' + sid, name=name, icon=icon, state='buy',
+                                 ok=game.money >= cost, price=f'영입 {cafe.fmt(cost)}', sub=sd['desc']))
+                continue
+            work = (f'근무 {_hours(game.staff_work[sid])}/{_hours(staff_target(level))}'
+                    if level < sd['max'] else '최대 성장')
+            rows.append(dict(kind='mate', id='staff:' + sid, name=f'★ {name}  Lv.{level}/{sd["max"]}',
+                             icon=icon, state='owned', ok=False, price=work,
+                             sub=f'수익 +{int(sd["bonus"] * level * 100)}%'))
+        return rows
 
     def mate_rows(game, sub):
         tier = sub[2:]
@@ -731,12 +783,13 @@ def install(cafe):
         if tier == 'normal':
             items = [(f'n_{sp}_{v}', normal_label(sp, v), animal_icon(sp, v))
                      for sp, looks in cafe.SPECIES.items() for v in range(len(looks))]
+            items += [(k, fam_label(k), fam_image(k)) for k in ['fam_' + o for o in OCCASIONS]]
         elif tier == 'family':
-            items = [('fam_' + o, OCC_NAME[o], family_composite(1 + i, 0, 1, o)) for i, o in enumerate(OCCASIONS)]
+            items = [(k, fam_label(k), fam_image(k)) for k in ['famn_' + n for n in famnames]]
         else:
             items = [(k, specials.SPECIAL[k], special_surf(k, 0, 1)) for k in (rare_ids if tier == 'rare' else legend_ids)]
         cost = mate_cost(game, tier)
-        rows = []
+        rows = staff_rows(game) if tier == 'normal' else []
         for key, name, image in items:
             if key in game.col['mates']:
                 lv = mate_lv(game.col, key)
@@ -755,26 +808,30 @@ def install(cafe):
                 why = mate_block(game, key, tier)
                 rows.append(dict(kind='mate', id=key, name=name, icon=fit(image), ok=not why and game.money >= cost,
                                  state='locked' if why else 'buy', price=f'영입 {cafe.fmt(cost)}',
-                                 sub=why or f'수익 +{bonus_each * 100:g}% · 눌러서 영입 · 근무하면 성장'))
+                                 sub=why or f'수익 +{bonus_each * 100:g}%'))
         return rows
 
     def mate_name(key):
         tier = mate_tier(key)
+        if key.startswith(('fam_', 'famn_')):
+            return fam_label(key)
         if tier == 'normal':
             _n, sp, var = key.split('_')
             return normal_label(sp, int(var))
-        return OCC_NAME[key[4:]] if tier == 'family' else specials.SPECIAL.get(key, key)
+        return specials.SPECIAL.get(key, key)
 
     def mate_image(key, frame, facing):
         """Walking sprite of a companion, as (surface, feet offset y) -- same art the guest has in the cafe."""
         tier = mate_tier(key)
+        if key.startswith(('fam_', 'famn_')):
+            return fam_image(key, frame, facing), 12, 32
         if tier == 'normal':
             _n, sp, var = key.split('_')
             surf = pygame.Surface((40, 44), pygame.SRCALPHA)
             cafe.draw_animal(surf, 20, 36, sp, int(var), cafe.CUST_SHIRTS[0], None, frame, facing)
             return surf, 20, 36
         if tier == 'family':
-            return family_composite(1 + OCCASIONS.index(key[4:]), frame, facing, key[4:]), 12, 32
+            return fam_image(key, frame, facing), 12, 32
         return special_surf(key, frame, facing), 11, 24
 
     class Mate(cafe.Staff):
@@ -833,23 +890,31 @@ def install(cafe):
         game.col['mate_lv'][key] = 1
         if not game.col.get('rep'):
             game.col['rep'] = key
-        if tier == 'normal':
+        if key.startswith(('fam_', 'famn_')):
+            name = fam_label(key)
+        elif tier == 'normal':
             _n, sp, var = key.split('_')
             name = normal_label(sp, int(var))
         else:
-            name = OCC_NAME[key[4:]] if tier == 'family' else specials.SPECIAL.get(key, key)
+            name = specials.SPECIAL.get(key, key)
         game.toast(f'{name}이(가) 동료가 되었어요! 수익 +{MATE_RULES[tier][0] * 100:g}%')
         game.recalc()      # also puts the representative in the cafe
 
     def crew_mate(self):
-        return self.tab == staff_tab and mate_sub(self) != 'm_staff'
+        return self.tab == staff_tab
+
+    def valid_sub(cat, sub):
+        # A stale tab-strip hit can store another category's sub id; fall back to the first tab.
+        return sub if any(sub == sid for sid, _ in SUBTABS[cat]) else SUBTABS[cat][0][0]
 
     def mate_sub(self):
-        return getattr(self, 'dex_subs', {}).get('mate', SUBTABS['mate'][0][0])
+        return valid_sub('mate', getattr(self, 'dex_subs', {}).get('mate'))
 
     def cat_sub(self):
         cat = 'mate' if self.tab == staff_tab else getattr(self, 'dex_cat', 'guest')
-        return cat, getattr(self, 'dex_subs', {}).get(cat, SUBTABS[cat][0][0])
+        if cat not in SUBTABS:
+            cat = 'guest'
+        return cat, valid_sub(cat, getattr(self, 'dex_subs', {}).get(cat))
 
     def trophy_icon(done):
         icon = pygame.Surface((46, 46), pygame.SRCALPHA)
@@ -888,9 +953,9 @@ def install(cafe):
             return rows
         for skin in SKINS:
             if skin_ok(game, skin):
-                using = skin_palette(game)['id'] == skin['id']
+                using = real_skin(game)['id'] == skin['id']
                 rows.append(dict(kind='skin', id=skin['id'], name=skin['name'],
-                                 sub='사용 중' if using else '눌러서 적용', price='미니바 · 작업표시줄 바',
+                                 sub='사용 중' if using else '눌러서 미리보기', price='툴바',
                                  ok=False, state='owned', icon=skin_icon(skin)))
             else:
                 rows.append(dict(kind='none', id=skin['id'], name=skin['name'],
@@ -922,8 +987,8 @@ def install(cafe):
             return ('ach', 'ach_list')
         if kind == 's':
             return ('ach', 'ach_skin')
-        sub = ('normal' if rest.startswith('n_') else
-               'family' if rest.startswith(('fam_', 'famn_', 'fama_')) else
+        sub = ('normal' if rest.startswith(('n_', 'fam_')) else
+               'family' if rest.startswith(('famn_', 'fama_')) else
                'legend' if rest in legend_ids else 'rare')
         return ('guest', sub)
 
@@ -961,6 +1026,66 @@ def install(cafe):
     def recipe_sub(self):
         return getattr(self, 'recipe_sub_id', 'normal')
 
+    STRAWBERRY_STICKER = ('..gg.gg..', '...ggg...', '.rrrrrrr.', 'rrrwrrwrr', 'rrrrrrrrr',
+                          'rwrrrwrrr', '.rrrrrrr.', '..rrwrr..', '...rrr...')
+    STICKER_PIXELS = {'g': (96, 178, 84), 'r': (232, 64, 84), 'w': (255, 214, 220)}
+    RAINBOW_BANDS = ((236, 72, 72), (255, 160, 60), (255, 226, 80), (92, 190, 100), (80, 150, 240))
+    sticker_cache = {}
+
+    def sticker_art(vid):
+        if vid == 'strawberry':
+            art = pygame.Surface((9, 9), pygame.SRCALPHA)
+            for y, row in enumerate(STRAWBERRY_STICKER):
+                for x, ch in enumerate(row):
+                    if ch in STICKER_PIXELS:
+                        art.set_at((x, y), STICKER_PIXELS[ch])
+        elif vid == 'choco':
+            art = pygame.Surface((9, 9), pygame.SRCALPHA)
+            art.fill((126, 78, 50))
+            for x, y, w, h in ((0, 0, 4, 4), (5, 0, 4, 4), (0, 5, 4, 4), (5, 5, 4, 4)):
+                art.fill((168, 112, 76), (x, y, w, 1))
+                art.fill((168, 112, 76), (x, y, 1, h))
+            art.fill((84, 48, 32), (4, 0, 1, 9))
+            art.fill((84, 48, 32), (0, 4, 9, 1))
+        else:
+            art = pygame.Surface((13, 7), pygame.SRCALPHA)
+            for y in range(7):
+                for x in range(13):
+                    d = ((x - 6) ** 2 + (y - 6) ** 2) ** .5
+                    if 2.5 <= d < 7.5:
+                        art.set_at((x, y), RAINBOW_BANDS[int(d - 2.5)])
+        return art
+
+    def sticker_for(vid):
+        if vid not in sticker_cache:
+            art = sticker_art(vid)
+            w, h = art.get_size()
+            sheet = pygame.Surface((w + 4, h + 4), pygame.SRCALPHA)
+            mask = pygame.mask.from_surface(art)
+            for radius, color in ((2, (70, 44, 32, 255)), (1, (255, 255, 255, 255))):
+                shape = mask.to_surface(setcolor=color, unsetcolor=(0, 0, 0, 0))
+                for dx in range(-radius, radius + 1):
+                    for dy in range(-radius, radius + 1):
+                        sheet.blit(shape, (2 + dx, 2 + dy))
+            sheet.blit(art, (2, 2))
+            sticker_cache[vid] = sheet
+        return sticker_cache[vid]
+
+    def variant_icon(rid, vid):
+        """Base bread icon with the variant sticker on its bottom-right corner."""
+        icon = cafe.icon_for('recipe', rid)
+        if vid not in ('strawberry', 'choco', 'rainbow'):
+            return icon
+        key = ('variant', rid, vid)
+        if key not in cafe.icon_cache:
+            sticker = sticker_for(vid)
+            out = icon.copy()
+            out.blit(sticker, (out.get_width() - sticker.get_width(), out.get_height() - sticker.get_height()))
+            cafe.icon_cache[key] = out
+        return cafe.icon_cache[key]
+
+    cafe.variant_icon = variant_icon
+
     def variant_rows(game, vid):
         v = next(x for x in VARIANTS if x[0] == vid)
         rows = []
@@ -969,7 +1094,7 @@ def install(cafe):
             if game.rlv[rid] <= 0:
                 continue
             n = game.col['variants'].get(rid, {}).get(vid, 0)
-            icon = cafe.icon_for('recipe', rid)
+            icon = variant_icon(rid, vid)
             if n:
                 rows.append(dict(kind='none', id=rid, name=f'{v[1]} {recipe["name"]}',
                                  sub=f'{n}회 발견 · 판매가 {v[3]:g}배',
@@ -1015,7 +1140,7 @@ def install(cafe):
         normals = [f'n_{sp}_{v}' for sp, looks in cafe.SPECIES.items() for v in range(len(looks))]
         seen = lambda k: guests.get(k, {}).get('v', 0) > 0
         fam = ['fam_' + o for o in OCCASIONS]
-        groups = dict(normal=normals, rare=rare_ids, family=fam, legend=legend_ids,
+        groups = dict(normal=normals + fam, rare=rare_ids, family=[], legend=legend_ids,
                       famname=['famn_' + n for n in famnames], famlook=[f'fama_{i}' for i in famlooks])
         out = {k: f'{sum(seen(i) for i in v)}/{len(v)}' for k, v in groups.items()}
         every = groups['family'] + groups['famname'] + groups['famlook']
@@ -1025,11 +1150,10 @@ def install(cafe):
         defs = ach_defs()
         out['ach'] = out['ach_list'] = f'{sum(d[0] in game.col["ach"] for d in defs)}/{len(defs)}'
         mates = game.col['mates']
-        tiers = dict(m_normal=normals, m_rare=rare_ids, m_family=fam, m_legend=legend_ids)
+        tiers = dict(m_normal=normals + fam, m_rare=rare_ids, m_family=groups['famname'], m_legend=legend_ids)
         for sid, ids in tiers.items():
             out[sid] = f'{sum(i in mates for i in ids)}/{len(ids)}'
         out['mate'] = f'{len(mates)}/{sum(map(len, tiers.values()))}'
-        out['m_staff'] = f'{sum(game.staff_n[s["id"]] > 0 for s in cafe.STAFF)}/{len(cafe.STAFF)}'
         out['ach_skin'] = f'{sum(skin_ok(game, k) for k in SKINS)}/{len(SKINS)}'
         return out
 
@@ -1039,10 +1163,40 @@ def install(cafe):
 
     def draw_row(self, ui, rect, r, mouse, area):
         result = original_draw_row(self, ui, rect, r, mouse, area)
+        if r.get('sub2'):       # condition continues on a second line instead of being cut off
+            cafe.text(ui, r['sub2'], 12, (130, 100, 76), rect.x + 66, rect.y + 41)
         if r.get('kind') == 'skin':
+            self._skin_hits.append((rect.clip(area), r['id']))
+        elif r.get('kind') == 'none' and r.get('state') == 'locked' and r.get('id') in SKIN_BY_ID:
             self._skin_hits.append((rect.clip(area), r['id']))
         elif r.get('kind') == 'mate' and r.get('state') in ('buy', 'owned'):
             self._mate_hits.append((rect.clip(area), r['id']))
+            if r['state'] == 'buy':
+                self._mate_info[r['id']] = (r['name'], r.get('icon'))
+                # the green hire box drawn by the base row: bottom-right, sized by its label
+                width = min(rect.w - 76, max(110, cafe.font(13, True).size('구매 ' + r['price'])[0] + 20))
+                box = pygame.Rect(rect.right - width - 8, rect.bottom - 26, width, 22)
+                self._mate_btn[r['id']] = box.inflate(8, 6).clip(area)
+        if r.get('id') in SKIN_BY_ID and r.get('kind') in ('skin', 'none'):
+            using = r.get('state') == 'owned' and 'using' in r and r['using']
+            locked = r.get('state') == 'locked'
+            using = r.get('sub') == '사용 중'
+            label = '잠김' if locked else ('사용 중' if using else '적용')
+            width = min(rect.w - 76, max(80, cafe.font(13, True).size(label)[0] + 20))
+            box = pygame.Rect(rect.right - width - 8, rect.bottom - 26, width, 22)
+            on = not locked and not using
+            pygame.draw.rect(ui, (214, 238, 206) if on else (226, 214, 190), box)
+            pygame.draw.rect(ui, (70, 170, 90) if on else (150, 130, 100), box, 2)
+            cafe.text(ui, label, 13, (40, 100, 55) if on else (130, 110, 86), box.centerx, box.centery, True, 'mc')
+            self._skin_btn[r['id']] = box.inflate(8, 6).clip(area) if on else pygame.Rect(0, 0, 0, 0)
+        mark = None
+        if r.get('kind') in ('skin', 'none') and r.get('id') in SKIN_BY_ID:
+            mark = 'skin' if getattr(self, 'preview', None) == ('skin', r['id']) else None
+        elif r.get('kind') == 'mate' and getattr(self, 'preview', None) == ('mate', r['id']):
+            mark = 'mate'
+        if mark:
+            box = rect.clip(area)
+            pygame.draw.rect(ui, (70, 170, 90), box, 3)
         return result
 
     def recipe_banner(self, surface):
@@ -1057,7 +1211,7 @@ def install(cafe):
         px, py, pw = cafe.PANEL_X, cafe.PANEL_Y, cafe.PANEL_W
         label = counts(self.g)
         pygame.draw.rect(surface, (250, 232, 196), (px + 4, py + 52, pw - 8, 36))
-        cafe.text(surface, f'동료 {label["mate"]} · 직원 {label["m_staff"]} · 근무하면 자동으로 성장해요', 12,
+        cafe.text(surface, f'동료 {label["mate"]} · 근무하면 성장', 12,
                   (110, 76, 52), px + 12, py + 62, True)
 
         def strip(y, items, current, kind, names):
@@ -1080,8 +1234,12 @@ def install(cafe):
         strip(py + 88, SUBTABS['mate'], cat_sub(self)[1], 'sub', label)
 
     def draw(self, surface, mouse):
-        self._skin_hits, self._mate_hits = [], []
+        self._skin_hits, self._mate_hits, self._mate_info, self._mate_btn = [], [], {}, {}
+        self._skin_btn = {}
         in_book = self.tab == book_tab
+        if getattr(self, 'preview', None) and (self.tab, self.preview[0]) not in (
+                (staff_tab, 'mate'), (book_tab, 'skin')):
+            self.preview = None
         saved = cafe.LIST_OFF
         if in_book or self.tab == 1:
             cafe.LIST_OFF = saved + SUB_H
@@ -1091,6 +1249,7 @@ def install(cafe):
             original_draw(self, surface, mouse)
         finally:
             cafe.LIST_OFF = saved
+        self.g.skin_preview = self.preview[1] if getattr(self, 'preview', None) and self.preview[0] == 'skin' else None
         self._dex_hits = []
         view = cat_sub(self) if in_book else None
         last = getattr(self, '_dex_view', None)
@@ -1106,6 +1265,17 @@ def install(cafe):
         self._recipe_seen = self.tab == 1
         if self.tab == staff_tab:
             crew_strips(self, surface)
+            pv = getattr(self, 'preview', None)
+            if pv and pv[1] in self._mate_info:
+                name, icon = self._mate_info[pv[1]]
+                strip = pygame.Rect(cafe.PANEL_X + 4, cafe.PANEL_Y + 52, cafe.PANEL_W - 8, 36)
+                pygame.draw.rect(surface, (214, 238, 206), strip)
+                if icon is not None:
+                    h = 32
+                    surface.blit(pygame.transform.smoothscale(icon, (max(1, icon.get_width() * h // icon.get_height()), h)),
+                                 (strip.x + 6, strip.y + 2))
+                cafe.text(surface, f'미리보기 · {name}', 12, (40, 120, 60),
+                          strip.x + 50, strip.centery, True, 'ml')
             return
         if not in_book:
             if recipe_fresh(self.g):
@@ -1158,16 +1328,29 @@ def install(cafe):
                         cat = 'mate' if self.tab == staff_tab else getattr(self, 'dex_cat', 'guest')
                         self.dex_subs = dict(getattr(self, 'dex_subs', {}), **{cat: sid})
                     self.scroll[self.tab] = 0
+                    self.preview = None
                     return
             for rect, key in getattr(self, '_mate_hits', ()):
                 if rect.collidepoint(pos):
-                    invite(game, key)
+                    if key in self._mate_info and not self._mate_btn[key].collidepoint(pos):
+                        self.preview = ('mate', key)         # the row previews; only the hire box hires
+                        return
+                    self.preview = None
+                    if key.startswith('staff:'):
+                        game.hire(key[6:])
+                    else:
+                        invite(game, key)
                     return
             for rect, sid in getattr(self, '_skin_hits', ()):
                 if rect.collidepoint(pos):
-                    game.col['skin'] = sid
+                    if self._skin_btn.get(sid, rect).collidepoint(pos) and skin_ok(game, SKIN_BY_ID[sid]):
+                        self.preview = None
+                        game.col['skin'] = sid       # only the apply box applies; the row previews
+                    else:
+                        self.preview = ('skin', sid)
                     return
-            if crew_mate(self):
+            on_tab_strip = any(kind == 'tab' and rect.collidepoint(pos) for rect, kind, *_ in self.hit)
+            if crew_mate(self) and not on_tab_strip:
                 return                  # companion rows are not staff hires
         return original_click(self, pos, game, scene_clicks)
 

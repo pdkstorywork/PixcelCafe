@@ -16,3 +16,7 @@ __pycache__/
 # Local asset previews.
 /*-size-check.png
 /summer-outfit-preview.png
+
+# Release binaries are distributed via GitHub Releases.
+/PixelCafe.exe
+/dist/

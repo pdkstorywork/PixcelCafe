@@ -148,8 +148,11 @@ def install(cafe):
     base_item = {s['id']: s for s in cafe.FURN}
 
     def cost(theme, part):
-        value = PRICE[part] * (PREMIUM_PRICE if theme == 'golden' else 1)
-        return float(round(value / 10) * 10)
+        from progression import COST_UNIT, FURN_COST_MULT, SHOP_COST_MULT
+        mult = FURN_COST_MULT if part in FURN_SLOT else SHOP_COST_MULT   # same repricing as the base shop
+        value = PRICE[part] * mult * COST_UNIT * (PREMIUM_PRICE if theme == 'golden' else 1)
+        from progression import shop_price
+        return shop_price(value)
 
     def bonus(theme, part):
         return round(BONUS[part] * (PREMIUM_BONUS if theme == 'golden' else 1), 4)
@@ -406,13 +409,22 @@ def install(cafe):
     original_layers = art.stand_layers
     skin_cache = {}
 
+    original_preview = UI.preview_game
+
+    def preview_game(self):
+        view = original_preview(self)
+        state['view'] = view if view is not self.g else None
+        return view
+
+    UI.preview_game = preview_game
+
     def stand_layers(key):
-        game = state['game']
+        game = state.get('view') or state['game']
         skin = None
         if game is not None:
-            fid = getattr(game, 'theme_eq', {}).get('stand_skin')
-            if fid in game.furn:
-                skin = fid
+            owned = owned_furn(game, 'stand_skin')
+            if owned is not None:
+                skin = owned['id']
         if skin is None:
             return original_layers(key)
         if skin not in skin_cache:

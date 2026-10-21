@@ -12,19 +12,19 @@ SAVE_SCHEMA_VERSION = 1
 
 # Tier occurrence and variant occurrence rates stay independent of duplicate
 # protection: this only changes which eligible entry fills an existing roll.
-LEGEND_P, RARE_P, FAMILY_P = 0.002, 0.08, 0.04
+LEGEND_P, RARE_P, FAMILY_P = 0.001, 0.05, 0.03
 LEGEND_MULT, RARE_MULT, FAMILY_MULT = 3, 2, 4
 LEGEND = ('hachiware', 'chiikawa', 'usagi')
-STEPS = (1, 3, 6, 10)
+STEPS = (1, 5, 15, 30)
 FRIEND_BONUS, VARIANT_BONUS = 0.002, 0.0005
-DROP_P = {'rare': 0.10, 'family': 0.06, 'legend': 0.4}
+DROP_P = {'rare': 0.06, 'family': 0.04, 'legend': 0.25}
 DROP_MULT = 2
 VARIANTS = (
     ('rainbow', '무지개', 0.0015, 8.0), ('gold', '황금', 0.004, 3.0),
     ('choco', '초코', 0.012, 1.6), ('strawberry', '딸기', 0.03, 1.3),
 )
-MATE_RULES = {'normal': (0.001, 0, 20, 0), 'rare': (0.004, 4, 100, 0),
-              'family': (0.010, 3, 150, 0), 'legend': (0.030, 1, 500, 8)}
+MATE_RULES = {'normal': (0.001, 0, 50, 0), 'rare': (0.004, 4, 250, 0),
+              'family': (0.010, 3, 350, 0), 'legend': (0.030, 1, 1200, 8)}
 MATE_MAX_LV, MATE_LV_BONUS = 10, 0.1
 ACH_SUB, ACH_CAT, ACH_ALL = (0.005, 20), (0.010, 60), (0.030, 200)
 

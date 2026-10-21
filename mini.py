@@ -126,9 +126,12 @@ ALPHA_IDLE, ALPHA_HOVER = 150, 255   # bar opacity (0-255); fully opaque while h
 NOTE_WORDS = ('도감', '손님', '등장', '우정', '변종', '선물', '업적')
 # mini bar buttons (logical 320x228 coordinates): settings sits right of the gold amount,
 # minimize takes the old settings slot.
-MIN_RECT = (224, 210, 22, 16)
-SPEED_W = (22, 24)              # x5 / x10 button widths in the mini window
-SETTINGS_W = 24                 # settings button sits where x5 starts; x5/x10 shift right of it
+MIN_RECT = (222, 210, 22, 16)
+BTN_W, BTN_GAP, ROW_Y = 22, 2, 210   # every mini-bar button: same size, same gap
+SPEED_W = (22, 22)              # x5 / x10 button widths in the mini window
+GOLD_X, GOLD_X_NEW = 20, 8        # gold amount x: original (right of the coin) and without the coin
+BUTTONS_X = 150                 # left edge of settings/x5/x10 (right-aligned against the minimize button)
+SETTINGS_W = 22                 # settings button sits where x5 starts; x5/x10 shift right of it
 BAR_COLOR = (96, 62, 42)
 
 
@@ -191,23 +194,20 @@ def install_mini_bar(cafe):
     def draw_speed(surface, game, mouse, x, y, mini=False):
         # the x5/x10 buttons are shared with the normal UI: recolour them for the mini bar only
         if not mini:
-            return speed_fn(surface, game, mouse, x, y, mini)
+            return []
         # mini layout: settings button first (next to the gold), then narrower x5/x10
         skin = palette(game)
+        # income / toast text takes the slot right of the gold; the buttons sit against the minimize button
+        left = ref.get('gold_right', x - 6) + 4
+        ref['income'] = (left, y + 8)
+        x = MIN_RECT[0] - (BTN_W + BTN_GAP)      # settings sits directly left of the toolbar-mode button, same gap
         ref['settings_x'] = x
-        x += SETTINGS_W + 4
-        buttons = []
-        for speed, width in ((5, SPEED_W[0]), (10, SPEED_W[1])):
-            rect = pg.Rect(x, y, width, 16)
-            active = game.guest_speed == speed
-            pg.draw.rect(surface, cafe.ACCENT if active else skin['btn'], rect)
-            pg.draw.rect(surface, cafe.INK, rect, 1)
-            if rect.collidepoint(mouse):
-                pg.draw.rect(surface, (255, 255, 255), rect, 1)
-            cafe.text(surface, f'x{speed}', 10, (255, 255, 255) if active else cafe.BROWN_D,
-                      rect.centerx, rect.centery, True, 'mc', aa=False)
-            buttons.append((rect, speed))
-            x = rect.right + 3
+        x += SETTINGS_W + 2
+        # speed buttons removed: fixed guest rate. The original draw_mini still reads
+        # speed_buttons[-1][0].right, so hand it a zero-width (unclickable, invisible) anchor.
+        buttons = [(pg.Rect(x - 2, y, 0, 16), 0)]
+        ref['cx0'] = x + 2
+        ref['region'] = (ref['income'][0], x - SETTINGS_W - 6)
         return buttons
 
     cafe.draw_guest_speed_buttons = draw_speed
@@ -228,6 +228,24 @@ def install_mini_bar(cafe):
         speed_codes.setdefault(skin['id'], speed_base.replace(co_consts=tuple(
             swap.get(value, value) if isinstance(value, tuple) else value for value in speed_base.co_consts)))
 
+    def draw_gear(surface, center, color, bg):
+        """Standard 8-tooth settings cog, drawn 4x and smoothed down."""
+        import math
+        k, r_out, r_in = 4, 7, 5
+        size = (r_out * 2 + 2) * k
+        big = pg.Surface((size, size), pg.SRCALPHA)
+        mid = size / 2
+        points = []
+        for i in range(8):
+            a = math.radians(i * 45)
+            for da, r in ((-17, r_in), (-10, r_out), (10, r_out), (17, r_in)):
+                t = a + math.radians(da)
+                points.append((mid + math.cos(t) * r * k, mid + math.sin(t) * r * k))
+        pg.draw.polygon(big, color, points)
+        pg.draw.circle(big, bg, (mid, mid), 2.2 * k)
+        small = pg.transform.smoothscale(big, (r_out * 2 + 2, r_out * 2 + 2))
+        surface.blit(small, small.get_rect(center=center))
+
     def draw_mini(screen, game, scene, mouse):
         ref['game'] = game
         skin = palette(game)
@@ -236,30 +254,94 @@ def install_mini_bar(cafe):
             off = pg.Rect(-100, -100, 1, 1)
             return [], off, [], off
         # the original tooltip/hover for the old settings slot must not fire on the minimize button
-        hidden = (-1000, -1000) if pg.Rect(MIN_RECT).collidepoint(mouse) else mouse
-        result = original_draw_mini(screen, game, scene, hidden)
+        settings = pg.Rect(ref.get('settings_x', 83), 210, SETTINGS_W, 16)
+        hidden = (-1000, -1000) if pg.Rect(MIN_RECT[0] - 1, ROW_Y - 2, screen.get_width(), 20).collidepoint(mouse) or settings.collidepoint(mouse) else mouse
+        # the original draws income/toasts right of the buttons; redirect them to the slot next to the gold
+        plain_text = cafe.text
+
+        def text_hook(surface, string, size, color, x, y, *args, **kwargs):
+            slot = ref.get('income')
+            align = args[1] if len(args) > 1 else kwargs.get('align')
+            if slot and y == slot[1] and size in (11, 12):
+                left, right = ref['region']
+                if string.startswith('+') and align == 'mr':
+                    surface.set_clip(None)
+                    return plain_text(surface, string, size, color, left, y, args[0], 'ml', *args[2:], **kwargs)
+                if align == 'ml' and size == 11:
+                    surface.set_clip(pg.Rect(left, y - 10, max(0, right - left), 20))
+                    return plain_text(surface, string, size, color, x - ref['cx0'] + left, y, *args, **kwargs)
+            if size == 12 and x == GOLD_X and align == 'ml':
+                rect = plain_text(surface, string, size, color, GOLD_X_NEW, y, *args, **kwargs)
+                ref['gold_right'] = rect.right
+                return rect
+            return plain_text(surface, string, size, color, x, y, *args, **kwargs)
+
+        plain_circle = pg.draw.circle
+
+        def circle_hook(surface, color, center, *args, **kwargs):
+            if tuple(center) == (GOLD_X - 10, ROW_Y - 2 + 10):     # the yellow coin left of the gold amount
+                return pg.Rect(center, (0, 0))
+            return plain_circle(surface, color, center, *args, **kwargs)
+
+        cafe.text = text_hook
+        pg.draw.circle = circle_hook
+        try:
+            result = original_draw_mini(screen, game, scene, hidden)
+        finally:
+            cafe.text = plain_text
+            pg.draw.circle = plain_circle
         top, bottom = screen.get_height() - 20, screen.get_height() - 2
         pg.draw.line(screen, skin['light'], (6, top + 1), (screen.get_width() - 7, top + 1))   # bevel
         pg.draw.line(screen, skin['edge'], (4, bottom), (screen.get_width() - 5, bottom))
-        pg.draw.rect(screen, skin['fill'], (MIN_RECT[0] - 1, MIN_RECT[1] - 1, MIN_RECT[2] + 2, MIN_RECT[3] + 2))
+        # repaint the right-hand buttons so all of them share one size and gap
+        modes, _old_x, speeds, _old_settings = result
+        # erase the originals with the bar's own colour (sampled from the gap before them), keeping the bevel rows
+        bar_bg = screen.get_at((MIN_RECT[0] - 2, ROW_Y + 8))
+        pg.draw.rect(screen, bar_bg, (MIN_RECT[0] - 1, ROW_Y, screen.get_width() - MIN_RECT[0] - 3, 16))
+        step = BTN_W + BTN_GAP
+        mode_rects = [pg.Rect(MIN_RECT[0] + step * (i + 1), ROW_Y, BTN_W, 16) for i in range(len(modes))]
+        xbtn = pg.Rect(MIN_RECT[0] + step * (len(modes) + 1), ROW_Y, BTN_W, 16)
+        tips = []
+        for box, (_old, portrait) in zip(mode_rects, modes):
+            hov = box.collidepoint(mouse)
+            pg.draw.rect(screen, cafe.ACCENT if hov else skin['btn'], box)
+            pg.draw.rect(screen, cafe.INK, box, 1)
+            icon = pg.Rect(0, 0, 7 if portrait else 12, 11 if portrait else 7)
+            icon.center = box.center
+            pg.draw.rect(screen, cafe.BROWN_D, icon, 1)
+            if hov:
+                tips.append('세로모드' if portrait else '가로모드')
+        hov = xbtn.collidepoint(mouse)
+        pg.draw.rect(screen, (214, 84, 76) if hov else skin['btn'], xbtn)
+        pg.draw.rect(screen, (54, 34, 24), xbtn, 1)
+        xc = (255, 255, 255) if hov else (84, 52, 34)
+        pg.draw.line(screen, xc, (xbtn.x + 7, xbtn.y + 4), (xbtn.x + 14, xbtn.y + 11), 2)
+        pg.draw.line(screen, xc, (xbtn.x + 14, xbtn.y + 4), (xbtn.x + 7, xbtn.y + 11), 2)
+        if hov:
+            tips.append('종료')
+        if tips:
+            cafe.draw_tooltip(screen, tips[0], mouse[0], ROW_Y - 29)
+        modes = [(box, portrait) for box, (_old, portrait) in zip(mode_rects, modes)]
         settings = pg.Rect(ref.get('settings_x', 83), 210, SETTINGS_W, 16)
         rect = pg.Rect(MIN_RECT)
-        for box, label in ((settings, '설정'), (rect, None)):
-            pg.draw.rect(screen, cafe.ACCENT if box.collidepoint(mouse) else skin['btn'], box)
+        for box, label in ((settings, 'gear'), (rect, None)):
+            box_color = cafe.ACCENT if box.collidepoint(mouse) else skin['btn']
+            pg.draw.rect(screen, box_color, box)
             pg.draw.rect(screen, cafe.INK, box, 1)
             if label:
-                cafe.text(screen, label, 10, cafe.BROWN_D, box.centerx, box.centery, True, 'mc', False, False)
+                draw_gear(screen, box.center, cafe.BROWN_D, box_color)
             else:
                 pg.draw.line(screen, cafe.BROWN_D, (box.x + 6, box.bottom - 5), (box.right - 7, box.bottom - 5), 2)
-        if rect.collidepoint(mouse):
-            label = '미니바모드'
+        for hover, label in ((rect, '툴바모드'), (settings, '설정')):
+            if not hover.collidepoint(mouse):
+                continue
             width = cafe.font(10, True).size(label)[0] + 10
-            tip = pg.Rect(0, rect.y - 20, width, 16)
-            tip.right = min(rect.right, screen.get_width() - 2)
+            tip = pg.Rect(0, hover.y - 20, width, 16)
+            tip.right = min(hover.right + (0 if hover is rect else 20), screen.get_width() - 2)
             pg.draw.rect(screen, (255, 250, 232), tip)
             pg.draw.rect(screen, cafe.INK, tip, 1)
             cafe.text(screen, label, 10, cafe.BROWN_D, tip.centerx, tip.centery, True, 'mc', False, False)
-        result = result[:3] + (settings,)
+        result = (modes, xbtn, speeds, settings)
         return result
 
     cafe.draw_mini = draw_mini
@@ -418,20 +500,15 @@ def install_mini_bar(cafe):
         bar = pg.Rect(0, BUB_H, BAR_W, BAR_H)
         skin = palette(game)
         win.blit(bar_surface(skin), bar)
-        pg.draw.circle(win, skin['edge'], (16, bar.centery), 8)
-        pg.draw.circle(win, cafe.GOLD, (16, bar.centery), 6)
-        cafe.text(win, cafe.fmt(game.money), 14, skin['text'], 29, bar.centery, True, 'ml', False, True)
+        gold = cafe.text(win, cafe.fmt(game.money), 14, skin['text'], 10, bar.centery, True, 'ml', False, True)
+        per_min = f'+{cafe.fmt(game.inc * 60)}/분'
+        cafe.text(win, per_min, 11, skin['text'], (gold.right if gold else 60) + 6, bar.centery, True, 'ml', False, False)
         btns = {}
         x = 108
-        for speed, width in ((5, 36), (10, 42)):
-            rect = pg.Rect(x, bar.y + 6, width, 20)
-            btns[('speed', speed)] = rect
-            button(win, rect, f'x{speed}', rect.collidepoint(mouse), game.guest_speed == speed, skin['btn'])
-            x += width + 4
-        rect = pg.Rect(BAR_W - 60, bar.y + 6, 22, 20)
+        rect = pg.Rect(BAR_W - 34, bar.y + 6, 22, 20)
         btns['quit'] = rect
         button(win, rect, 'X', rect.collidepoint(mouse), False, skin['btn'])
-        rect = pg.Rect(BAR_W - 34, bar.y + 6, 26, 20)
+        rect = pg.Rect(BAR_W - 64, bar.y + 6, 26, 20)
         btns['restore'] = rect
         button(win, rect, '', rect.collidepoint(mouse), False, skin['btn'])
         inner = rect.inflate(-12, -10)
@@ -443,11 +520,11 @@ def install_mini_bar(cafe):
                 if not rect.collidepoint(mouse):
                     continue
                 if key == 'restore':
-                    tip = ('미니모드로 돌아가기', rect.centerx)
+                    tip = ('미니모드', rect.centerx)
                 elif key == 'quit':
                     tip = ('종료', rect.centerx)
                 else:
-                    tip = (f'손님 도착 {key[1]}배', rect.centerx)
+                    tip = (f'손님 {key[1]}배', rect.centerx)
         if tip:
             draw_bubble(win, tip[0], tip[1], skin=skin)
         elif notes:
@@ -469,7 +546,8 @@ def install_mini_bar(cafe):
                     return
             point = _Point()
             ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
-            ref['drag'] = (point.x, point.y, *cafe.win_pos())
+            pos = cafe.win_pos()      # None when the window handle is unavailable
+            ref['drag'] = (point.x, point.y, *pos) if pos else None
         elif event.type == pg.MOUSEMOTION and ref['drag']:
             point = _Point()
             ctypes.windll.user32.GetCursorPos(ctypes.byref(point))
@@ -477,7 +555,7 @@ def install_mini_bar(cafe):
             cafe.win_move(wx + point.x - sx, wy + point.y - sy)
         elif event.type == pg.MOUSEBUTTONUP and event.button == 1 and ref['drag']:
             ref['drag'] = None
-            game.mini_pos = cafe.win_pos()
+            game.mini_pos = cafe.win_pos() or getattr(game, 'mini_pos', None)
 
     cafe._bar_api = type('MiniBar', (), dict(
         active=staticmethod(active), draw=staticmethod(draw), handle=staticmethod(handle),
@@ -547,8 +625,8 @@ def install_mini_window(cafe):
 
     # settings dialog wording: the toggle now applies to mini mode only
     draw = cafe.UI.draw_settings
-    labels = {'항상 위: ': '미니모드 항상 위: ',
-              '끄면 브라우저 등 다른 창 뒤로 가려집니다': '끄면 미니모드가 다른 창 뒤로 가려집니다'}
+    labels = {'항상 위: ': '미니·툴바모드 항상 위: ',
+              '끄면 브라우저 등 다른 창 뒤로 가려집니다': '끄면 미니·툴바모드가 다른 창 뒤로 가려집니다'}
     draw.__code__ = draw.__code__.replace(co_consts=tuple(
         labels.get(v, v) if isinstance(v, str) else v for v in draw.__code__.co_consts))
 
@@ -704,3 +782,74 @@ def install_monitor2(cafe):
     pg.display.set_mode = set_mode
     cafe.win_move = win_move
 
+
+
+# --- merged from tabs_merge.py: 꾸미기 tab folded into 가구 tab ---
+DECOR_TAB = 3
+FURN_TAB = 2
+
+
+def install_merged_tabs(cafe):
+    if getattr(cafe, '_merged_tabs_installed', False):
+        return
+    cafe._merged_tabs_installed = True
+    UI = cafe.UI
+    original_rows, original_draw = UI.rows, UI.draw
+
+    def rows(self):
+        result = original_rows(self)
+        if self.tab == FURN_TAB:
+            result.append(dict(kind='hdr', name='꾸미기'))
+            self.tab = DECOR_TAB
+            try:
+                result.extend(original_rows(self))
+            finally:
+                self.tab = FURN_TAB
+        return result
+
+    def draw(self, surface, mouse):
+        if self.tab == DECOR_TAB:
+            self.tab = FURN_TAB
+        original_draw(self, surface, mouse)
+        px, py, pw = cafe.PANEL_X, cafe.PANEL_Y, cafe.PANEL_W
+        if self.tab == FURN_TAB and not self.preview_items:
+            g = self.g
+            cafe.pygame.draw.rect(surface, (250, 232, 196), (px + 4, py + 52, pw - 8, 36))
+            cafe.text(surface, f"판매대·가구 +{round((g.b_stand + g.b_furn) * 100)}%  ·  "
+                      f"꾸미기 +{round(g.b_int * 100)}%", 12, (110, 76, 52), px + 12, py + 62, True)
+        shown = [i for i in range(len(cafe.TABS)) if i != DECOR_TAB]
+        bg = surface.get_at((px + 5, py + 28))
+        surface.fill(bg, (px + 6, py + 8, pw - 12, 40))
+        self.hit[:] = [h for h in self.hit if h[1] != 'tab']
+        tw = (pw - 16) // len(shown)
+        for slot, i in enumerate(shown):
+            name = cafe.TABS[i]
+            rect = cafe.pygame.Rect(px + 8 + slot * tw, py + 8, tw - 2, 40)
+            active = i == self.tab
+            cafe.pygame.draw.rect(surface, (232, 150, 70) if active else (214, 184, 140), rect)
+            cafe.pygame.draw.rect(surface, (54, 34, 24), rect, 2)
+            if rect.collidepoint(mouse) and not active:
+                cafe.pygame.draw.rect(surface, (255, 255, 255), rect, 2)
+            size = 15 if cafe.PORTRAIT else 12
+            while size > 8 and cafe.font(size, True).size(name)[0] > rect.w - 6:
+                size -= 1
+            cafe.text(surface, name, size, (255, 255, 255) if active else (84, 52, 34),
+                      rect.centerx, rect.centery, True, 'mc')
+            self.hit.append((rect, 'tab', i))
+
+    original_init = UI.__init__
+
+    def init(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        # Furniture thumbnails render whole cafe shells (~1.4s); do it at startup,
+        # not on the first click of the tab.
+        saved = self.tab
+        self.tab = FURN_TAB
+        try:
+            self.rows()
+        except Exception:
+            pass
+        finally:
+            self.tab = saved
+
+    UI.__init__, UI.rows, UI.draw = init, rows, draw
